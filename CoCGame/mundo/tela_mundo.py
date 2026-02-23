@@ -121,6 +121,9 @@ class TelaMundo:
         self._feedback: Optional[str] = None
         self._feedback_timer = 0
 
+        # Flag: acabou de sair de um grid — evita auto-explorar em loop
+        self._veio_da_masmorra = False
+
     # ══════════════════════════════════════════════════════════
     # LOOP PRINCIPAL
     # ══════════════════════════════════════════════════════════
@@ -150,6 +153,26 @@ class TelaMundo:
 
         self.estado.local_id = local_id
 
+        # ── Auto-explorar ──────────────────────────────────────────
+        # Se o local tem ação "explorar" e NÃO viemos de dentro do grid,
+        # pula o TelaLocal e abre o grid diretamente.
+        # Ao sair do grid (ESC), _veio_da_masmorra=True → mostra TelaLocal.
+        if not self._veio_da_masmorra:
+            acao_explorar = next(
+                (a for a in local.acoes if a.tipo == "explorar"), None
+            )
+            if acao_explorar:
+                from mundo.masmorras import get_masmorra as _gm
+                _md = _gm(acao_explorar.destino)
+                desc = _md.get("descricao", "") if _md else local.descricao
+                return self._processar_resultado({
+                    "tipo": "explorar",
+                    "destino": acao_explorar.destino,
+                    "descricao": desc,
+                })
+
+        self._veio_da_masmorra = False  # reset: próxima visita volta a auto-explorar
+        # ── TelaLocal normal ───────────────────────────────────────
         tela = TelaLocal(self.screen, local_id)
         resultado = tela.run(
             hp=self.estado.jogador.hp,
@@ -261,6 +284,8 @@ class TelaMundo:
         tela.itens_inv     = list(self.estado.inventario)
 
         resultado = tela.run()
+        # Ao sair do grid, mostra TelaLocal em vez de auto-explorar de novo
+        self._veio_da_masmorra = True
 
         # Sincroniza HP/SAN de volta (o Jogador é o mesmo objeto, mas garante)
         # (os sistemas de combate já alteram jogador.hp/sanidade diretamente)
