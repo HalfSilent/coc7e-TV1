@@ -21,6 +21,45 @@ from engine.inventario import Inventario
 # BÔNUS DE DANO (regra CoC 7e)
 # ══════════════════════════════════════════════════════════════
 
+# ══════════════════════════════════════════════════════════════
+# GERAÇÃO CoC 7e — dados para NPCs humanos
+# ══════════════════════════════════════════════════════════════
+
+_AUTO = object()   # sentinela — "auto-gerar conforme CoC 7e"
+
+
+def _r3d6x5() -> int:
+    """3D6 × 5  (FOR, CON, DES, POD, APA)  → 15–90."""
+    return sum(random.randint(1, 6) for _ in range(3)) * 5
+
+
+def _r2d6p6x5() -> int:
+    """(2D6+6) × 5  (TAM, INT, EDU)  → 40–90."""
+    return (sum(random.randint(1, 6) for _ in range(2)) + 6) * 5
+
+
+def _gerar_pericias_humano(des: int, pod: int) -> dict:
+    """
+    Gera perícias básicas de combate/social para um NPC humano genérico.
+    Valores baseados em DES (combate) e POD (social), com variação aleatória.
+    """
+    r = random.randint
+    lutar    = max(25, min(75, des // 2 + r(-5, 20)))
+    esquivar = max(15, min(50, des // 2 + r(-5, 10)))
+    armas    = max(15, min(65, des // 2 + r(-5, 20)))
+    intim    = max(15, min(60, pod // 2 + r(-10, 20)))
+    charme   = max(10, min(50, pod // 2 + r(-10, 15)))
+    persuasao = max(10, min(45, pod // 2 + r(-10, 15)))
+    return {
+        "Lutar (Soco)":          lutar,
+        "Esquivar":              esquivar,
+        "Armas de Fogo (Pistola)": armas,
+        "Intimidação":           intim,
+        "Charme":                charme,
+        "Persuasão":             persuasao,
+    }
+
+
 def calcular_bonus_dano(forca: int, tamanho: int) -> str:
     total = forca + tamanho
     if total <= 64:  return "-2"
@@ -183,19 +222,51 @@ class Jogador(Entidade):
 class Inimigo(Entidade):
     def __init__(self, nome: str = "Cultista",
                  col: float = 0.0, linha: float = 0.0,
-                 hp: int = 8, sanidade: int = 0,
-                 forca: int = 50, tamanho: int = 55,
-                 destreza: int = 45, constituicao: int = 45,
+                 hp=_AUTO, sanidade=_AUTO,
+                 forca=_AUTO, tamanho=_AUTO,
+                 destreza=_AUTO, constituicao=_AUTO,
+                 poder=_AUTO, inteligencia=_AUTO,
                  ia_raio: int = 6, skin_id: int = 3,
                  tipo: str = "humano",
                  disposicao: str = "Hostil",
+                 pericias: Optional[dict] = None,
                  **kwargs):
+        """
+        Se tipo == "humano" e um atributo não for passado explicitamente,
+        ele é gerado via dados CoC 7e (3D6×5 ou (2D6+6)×5), igual ao jogador.
+        Monstros e criaturas mantêm valores fixos padrão.
+        """
+        if tipo == "humano":
+            # ── Atributos físicos: 3D6×5 ───────────────────────
+            _for = forca       if forca       is not _AUTO else _r3d6x5()
+            _con = constituicao if constituicao is not _AUTO else _r3d6x5()
+            _des = destreza    if destreza    is not _AUTO else _r3d6x5()
+            _pod = poder       if poder       is not _AUTO else _r3d6x5()
+            # ── Atributos mentais/corporais: (2D6+6)×5 ─────────
+            _tam = tamanho     if tamanho     is not _AUTO else _r2d6p6x5()
+            _int = inteligencia if inteligencia is not _AUTO else _r2d6p6x5()
+            # ── Derivados ───────────────────────────────────────
+            _hp  = hp          if hp          is not _AUTO else (_con + _tam) // 10
+            _san = sanidade    if sanidade    is not _AUTO else min(_pod * 5, 99)
+        else:
+            # Monstros / criaturas — defaults fixos, sem rolagem
+            _for = forca       if forca       is not _AUTO else 50
+            _con = constituicao if constituicao is not _AUTO else 45
+            _des = destreza    if destreza    is not _AUTO else 45
+            _pod = poder       if poder       is not _AUTO else 50
+            _tam = tamanho     if tamanho     is not _AUTO else 55
+            _int = inteligencia if inteligencia is not _AUTO else 50
+            _hp  = hp          if hp          is not _AUTO else 8
+            _san = sanidade    if sanidade    is not _AUTO else 0
+
         super().__init__(
             nome=nome, col=col, linha=linha,
-            hp=hp, sanidade=sanidade, forca=forca, tamanho=tamanho,
-            destreza=destreza, constituicao=constituicao,
+            hp=_hp, sanidade=_san, forca=_for, tamanho=_tam,
+            destreza=_des, constituicao=_con,
             cor=(160, 50, 50), **kwargs
         )
+        self.poder        = _pod
+        self.inteligencia = _int
         self.ia_raio    = ia_raio
         self.ia_alerta  = False
         self.skin_id    = skin_id
@@ -204,6 +275,13 @@ class Inimigo(Entidade):
         self.tipo       = tipo
         # Mood exibido na tela de diálogo
         self.disposicao = disposicao
+        # Perícias para combate e social — auto-geradas para humanos
+        if pericias is not None:
+            self.pericias = pericias
+        elif tipo == "humano":
+            self.pericias = _gerar_pericias_humano(_des, _pod)
+        else:
+            self.pericias = {}
 
 
 class Engendro(Entidade):
@@ -228,3 +306,6 @@ class Engendro(Entidade):
         # Engendros nunca dialogam
         self.tipo       = "sobrenatural"
         self.disposicao = "Hostil"
+        self.pericias   = {}
+        self.poder        = 0
+        self.inteligencia = 20

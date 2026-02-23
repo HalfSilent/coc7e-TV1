@@ -274,8 +274,15 @@ class TelaDialogo:
         # Snapshot do background (para o overlay)
         self._bg = screen.copy()
 
+        # Overlay pré-criado uma vez (evita alocar Surface a cada frame)
+        self._overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+        self._overlay.fill(C_OVERLAY)
+
         # Tópico selecionado para esta instância
         self._topico = random.choice(_TOPICOS)
+
+        # Saudação cacheada — gerada UMA VEZ, não a cada frame (fix flickering)
+        self._saudacao = self._saudacao_npc()
 
         # Estado: "escolha" → "conversa" → "resultado"
         self._estado   = "escolha"
@@ -305,11 +312,9 @@ class TelaDialogo:
     # ── Renderização ─────────────────────────────────────────
 
     def _desenhar(self, hover: Optional[str] = None):
-        # Overlay escuro
-        overlay = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
-        overlay.fill(C_OVERLAY)
+        # Fundo + overlay pré-criado (sem alocar Surface a cada frame)
         self.screen.blit(self._bg, (0, 0))
-        self.screen.blit(overlay, (0, 0))
+        self.screen.blit(self._overlay, (0, 0))
 
         r = self._panel_rect()
 
@@ -354,8 +359,8 @@ class TelaDialogo:
             self._desenhar_conversa(r, x0, y)
 
     def _desenhar_escolha(self, r, x0, y, hover):
-        # Saudação do NPC
-        saud = self._saudacao_npc()
+        # Saudação do NPC — usa cache para não chamar random.choice() a cada frame
+        saud = self._saudacao
         for linha in textwrap.wrap(f'"{saud}"', 62):
             self.screen.blit(
                 self.f_normal.render(linha, True, C_TEXTO),
