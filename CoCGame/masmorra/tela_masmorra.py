@@ -31,6 +31,8 @@ import pygame
 
 from engine.mundo import Mundo, TipoTile, EfeitoAmbiental
 from engine.entidade import Entidade, Jogador, Inimigo, Engendro
+from engine.grid.tiles import TileLoader
+from engine.grid.objeto import ObjetoMasmorra, OpcaoMenu
 from combate.tela_combate import TelaCombate
 from dialogo.tela_dialogo import TelaDialogo
 from gerenciador_assets import get_font, garantir_fontes
@@ -91,30 +93,8 @@ MAPA_MASMORRA_PADRAO = [
 # Tile 4 = SAIDA (tratado como CHAO + marcador especial)
 
 
-# ══════════════════════════════════════════════════════════════
-# OBJETO INTERATIVO
-# ══════════════════════════════════════════════════════════════
-
-class ObjetoMasmorra:
-    """Objeto que o jogador pode interagir com [E]."""
-
-    def __init__(self, col: int, linha: int, tipo: str,
-                 nome: str, descricao: str,
-                 item_concedido: Optional[str] = None):
-        self.col  = col
-        self.linha = linha
-        self.tipo  = tipo   # "nota" | "item" | "porta" | "armadilha"
-        self.nome  = nome
-        self.descricao = descricao
-        self.item_concedido = item_concedido
-        self.usado = False
-
-    def interagir(self) -> str:
-        """Retorna texto descritivo da interação."""
-        if self.usado:
-            return f"[{self.nome}] já foi examinado."
-        self.usado = True
-        return self.descricao
+# ObjetoMasmorra e OpcaoMenu agora vivem em engine/grid/objeto.py
+# (importados acima — mantidos aqui para retrocompatibilidade via import *)
 
 
 # ══════════════════════════════════════════════════════════════
@@ -137,11 +117,15 @@ class TelaMasmorra:
         objetos: Optional[List[ObjetoMasmorra]] = None,
         saidas_especiais: Optional[Dict[Tuple[int, int], str]] = None,
         nome_local: str = "Masmorra",
+        tema: str = "padrao",
     ):
         self.screen   = screen
         self.jogador  = jogador
         self.clock    = pygame.time.Clock()
         self.nome_local = nome_local
+
+        # Sprite tile loader (DENZI + Kenney assets)
+        self.tiles = TileLoader(tema=tema, cell=CELL)
 
         # Mundo
         if mundo:
@@ -495,15 +479,194 @@ class TelaMasmorra:
         for obj in self.objetos:
             dist = abs(obj.col - jc) + abs(obj.linha - jl)
             if dist <= 1 and not obj.usado:
-                texto = obj.interagir()
-                self._msg(texto)
-                if obj.item_concedido:
-                    self.itens_inv.append(obj.item_concedido)
-                    if obj.item_concedido in ("revolver", "espingarda", "rifle", "faca"):
-                        self.arma_equipada = obj.item_concedido
-                    self._msg(f"+ {obj.item_concedido} adicionado ao inventário")
+                if obj.tem_menu:
+                    self._menu_interativo(obj)
+                else:
+                    # Modo legado
+                    texto = obj.interagir_simples()
+                    self._msg(texto)
+                    if obj.item_concedido:
+                        self._conceder_item(obj.item_concedido)
                 return
         self._msg("Nada por aqui...")
+
+    def _conceder_item(self, item: str):
+        """Adiciona item ao inventário e equipa arma se for uma."""
+        self.itens_inv.append(item)
+        armas = ("revolver", "espingarda", "rifle", "faca",
+                 "cacete", "facada", "estilete")
+        if item in armas and not self.arma_equipada:
+            self.arma_equipada = item
+        self._msg(f"+ {item} adicionado ao inventário")
+
+    # ══════════════════════════════════════════════════════════
+    # MENU DE INTERAÇÃO [E]
+    # ══════════════════════════════════════════════════════════
+
+    def _menu_interativo(self, obj: ObjetoMasmorra):
+        """
+        Exibe popup de opções para um ObjetoMasmorra com opcoes_menu.
+        Processa rolagem de perícia e concede pistas/itens.
+        """
+        import textwrap
+        w, h = self.screen.get_size()
+
+        # Layout do popup
+        PW, PH  = min(640, w - 60), min(440, h - 80)
+        PX = (w - PW) // 2
+        PY = (h - PH) // 2
+        CBORDA  = (120, 100,  70)
+        CBG     = ( 12,  10,  20, 230)
+        CTIT    = (212, 180, 100)
+        CDESC   = (160, 155, 145)
+        COPCAO  = (140, 140, 165)
+        CHOPCAO = (220, 200, 140)
+        CESC    = ( 80,  80,  95)
+
+        # Mapeamento tecla → OpcaoMenu
+        mapa_teclas = {op.tecla.upper(): op for op in obj.opcoes_menu}
+        resultado_texto: list[str] = []
+        fase = "escolha"   # "escolha" | "resultado"
+
+        while True:
+            # Renderiza o jogo ao fundo
+            self._renderizar()
+
+            # Overlay semitransparente
+            ov = pygame.Surface((w, h), pygame.SRCALPHA)
+            ov.fill((0, 0, 0, 160))
+            self.screen.blit(ov, (0, 0))
+
+            # Painel principal
+            panel = pygame.Surface((PW, PH), pygame.SRCALPHA)
+            panel.fill(CBG)
+            pygame.draw.rect(panel, CBORDA, (0, 0, PW, PH), 2, border_radius=6)
+            self.screen.blit(panel, (PX, PY))
+
+            # ── Título
+            ty = PY + 16
+            ts = self.f_titulo.render(obj.nome, True, CTIT)
+            self.screen.blit(ts, ts.get_rect(centerx=w // 2, top=ty))
+            ty += ts.get_height() + 6
+
+            # ── Descrição (quebra de linha)
+            for linha_desc in textwrap.wrap(obj.descricao, 62):
+                ds = self.f_normal.render(linha_desc, True, CDESC)
+                self.screen.blit(ds, ds.get_rect(centerx=w // 2, top=ty))
+                ty += ds.get_height() + 2
+            ty += 10
+
+            if fase == "escolha":
+                # ── Separador
+                pygame.draw.line(self.screen, CBORDA,
+                                 (PX + 20, ty), (PX + PW - 20, ty), 1)
+                ty += 12
+
+                # ── Opções
+                for op in obj.opcoes_menu:
+                    pericia_info = ""
+                    if op.pericia:
+                        val = getattr(self.jogador, "pericias", {}).get(op.pericia, 0)
+                        pericia_info = f"  [{op.pericia.capitalize()} {val}%]"
+                    linha_op = f"[{op.tecla.upper()}] {op.texto}{pericia_info}"
+                    os_s = self.f_hud.render(linha_op, True, COPCAO)
+                    self.screen.blit(os_s, os_s.get_rect(centerx=w // 2, top=ty))
+                    ty += os_s.get_height() + 8
+
+                ty += 6
+                esc_s = self.f_normal.render("[ESC] Fechar", True, CESC)
+                self.screen.blit(esc_s, esc_s.get_rect(centerx=w // 2, top=ty))
+
+            else:  # fase == "resultado"
+                # ── Texto de resultado
+                for linha_r in resultado_texto:
+                    rs = self.f_normal.render(linha_r, True, CHOPCAO)
+                    self.screen.blit(rs, rs.get_rect(centerx=w // 2, top=ty))
+                    ty += rs.get_height() + 4
+                ty += 10
+                cont_s = self.f_normal.render("[Enter / ESC] Continuar", True, CESC)
+                self.screen.blit(cont_s, cont_s.get_rect(centerx=w // 2, top=ty))
+
+            pygame.display.flip()
+
+            # ── Eventos
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    import sys; sys.exit()
+
+                if event.type == pygame.KEYDOWN:
+                    if fase == "resultado":
+                        if event.key in (pygame.K_ESCAPE, pygame.K_RETURN,
+                                         pygame.K_KP_ENTER, pygame.K_SPACE):
+                            return   # fecha menu
+
+                    elif fase == "escolha":
+                        if event.key == pygame.K_ESCAPE:
+                            return   # fecha sem ação
+
+                        char = pygame.key.name(event.key).upper()
+                        if char in mapa_teclas:
+                            op = mapa_teclas[char]
+                            resultado_texto = self._executar_opcao(obj, op)
+                            fase = "resultado"
+
+            self.clock.tick(60)
+
+    def _executar_opcao(self, obj: ObjetoMasmorra,
+                        op: OpcaoMenu) -> list[str]:
+        """
+        Executa a opção escolhida no menu interativo.
+        Retorna lista de linhas de texto para exibir como resultado.
+        """
+        import random
+        linhas: list[str] = []
+
+        sucesso = True
+        if op.pericia and not op.sem_check:
+            val = getattr(self.jogador, "pericias", {}).get(op.pericia, 0)
+            rola = random.randint(1, 100)
+            if op.dificuldade == "dificil":
+                limite = val // 2
+            elif op.dificuldade == "extremo":
+                limite = val // 5
+            else:
+                limite = val
+
+            if rola <= limite:
+                nivel = "Extremo!" if rola <= val // 5 else \
+                        "Difícil!" if rola <= val // 2 else "Sucesso"
+                sucesso = True
+                linhas.append(f"Rolagem: {rola} / {limite}  →  {nivel}")
+            else:
+                sucesso = False
+                linhas.append(f"Rolagem: {rola} / {limite}  →  Falhou")
+            linhas.append("")
+
+        if sucesso:
+            if op.pista:
+                linhas.append("[PISTA]")
+                import textwrap
+                for p in textwrap.wrap(op.pista, 55):
+                    linhas.append(p)
+                # Registra pista no jogador (se tiver atributo)
+                if hasattr(self.jogador, "pistas"):
+                    self.jogador.pistas.append(op.pista)
+                self._msg(f"[Pista] {op.pista[:50]}..." if len(op.pista) > 50 else f"[Pista] {op.pista}")
+
+            if op.item:
+                linhas.append("")
+                linhas.append(f"+ Item obtido: {op.item}")
+                self._conceder_item(op.item)
+        else:
+            linhas.append("Você não encontrou nada útil.")
+
+        # Objetos com menu podem ser consultados múltiplas vezes (não marca como usado)
+        # a menos que o tipo seja "item" (objeto físico que some após pegar)
+        if obj.tipo == "item" and sucesso and op.item:
+            obj.usado = True
+
+        return linhas
 
     # ══════════════════════════════════════════════════════════
     # UPDATE
@@ -543,6 +706,8 @@ class TelaMasmorra:
 
     def _desenhar_mapa(self):
         w, h = self.screen.get_size()
+        usar_sprites = self.tiles.tem_sprites()
+
         for l in range(self.mundo.linhas):
             for c in range(self.mundo.colunas):
                 cel = self.mundo.celula(c, l)
@@ -559,29 +724,62 @@ class TelaMasmorra:
                 if x + CELL < 0 or x > w or y + CELL < 0 or y > h:
                     continue  # fora da tela
 
-                # Cor base
-                if cel.tipo == TipoTile.PAREDE:
-                    cor = COR_PAREDE_V if visivel else COR_PAREDE
-                elif cel.tipo == TipoTile.ELEVADO:
-                    cor = COR_ELEVADO
-                else:
-                    cor = COR_CHAO_VISIT if visivel else COR_CHAO
-
-                # Saída especial
-                if (c, l) in self.saidas_especiais:
-                    cor = COR_SAIDA
-
                 r = pygame.Rect(x, y, CELL, CELL)
-                pygame.draw.rect(self.screen, cor, r)
-                pygame.draw.rect(self.screen, COR_BORDA, r, 1)
 
-                # Efeito ambiental (só se visível)
+                if usar_sprites and visivel:
+                    # ── Modo sprite ──────────────────────────
+                    if cel.tipo == TipoTile.PAREDE:
+                        spr = self.tiles.get_wall(c, l)
+                    elif cel.tipo == TipoTile.ELEVADO:
+                        # ELEVADO = objeto bloqueante (estante, caixa…)
+                        # desenha floor embaixo + objeto por cima
+                        floor_spr = self.tiles.get_floor(c, l)
+                        if floor_spr:
+                            self.screen.blit(floor_spr, (x, y))
+                        spr = self.tiles.get_objeto(c, l)
+                    elif (c, l) in self.saidas_especiais:
+                        spr = self.tiles.get_saida() or self.tiles.get_floor(c, l)
+                    else:
+                        spr = self.tiles.get_floor(c, l)
+
+                    if spr:
+                        self.screen.blit(spr, (x, y))
+                        # Borda sutil para legibilidade do grid
+                        pygame.draw.rect(self.screen, (0, 0, 0, 60), r, 1)
+                    else:
+                        # Fallback para rect se sprite não carregou
+                        self._desenhar_tile_rect(r, cel, c, l, visivel)
+
+                elif usar_sprites and visitada:
+                    # Visitado mas fora da visão → rect escuro (sem sprite)
+                    cor = COR_PAREDE if cel.tipo == TipoTile.PAREDE else COR_CHAO
+                    pygame.draw.rect(self.screen, cor, r)
+                    pygame.draw.rect(self.screen, COR_BORDA, r, 1)
+
+                else:
+                    # ── Modo rect (fallback ou não-visível) ──
+                    self._desenhar_tile_rect(r, cel, c, l, visivel)
+
+                # Efeito ambiental overlay (sempre, se visível)
                 if visivel and cel.efeito.name != "NENHUM":
                     ef_cor = EFEITO_CORES.get(cel.efeito)
                     if ef_cor:
                         ov = pygame.Surface((CELL, CELL), pygame.SRCALPHA)
                         ov.fill(ef_cor)
                         self.screen.blit(ov, (x, y))
+
+    def _desenhar_tile_rect(self, r: pygame.Rect, cel, c: int, l: int, visivel: bool):
+        """Renderiza tile como retângulo colorido (fallback)."""
+        if cel.tipo == TipoTile.PAREDE:
+            cor = COR_PAREDE_V if visivel else COR_PAREDE
+        elif cel.tipo == TipoTile.ELEVADO:
+            cor = COR_ELEVADO
+        else:
+            cor = COR_CHAO_VISIT if visivel else COR_CHAO
+        if (c, l) in self.saidas_especiais:
+            cor = COR_SAIDA
+        pygame.draw.rect(self.screen, cor, r)
+        pygame.draw.rect(self.screen, COR_BORDA, r, 1)
 
     def _desenhar_fog(self):
         """Overlay de névoa sobre células não visíveis."""
@@ -604,6 +802,7 @@ class TelaMasmorra:
                     self.screen.blit(fog, (x, y))
 
     def _desenhar_objetos(self):
+        jc, jl = int(self.jogador.col), int(self.jogador.linha)
         for obj in self.objetos:
             if obj.usado:
                 continue
@@ -611,13 +810,25 @@ class TelaMasmorra:
                 continue
             x, y = self._px(obj.col, obj.linha)
             cx, cy = x + CELL // 2, y + CELL // 2
-            pygame.draw.rect(self.screen, COR_OBJETO,
-                             (x + 8, y + 8, CELL - 16, CELL - 16),
-                             border_radius=3)
-            icone = {"nota": "N", "item": "I", "porta": "P", "armadilha": "!"}.get(obj.tipo, "?")
-            s = self.f_normal.render(icone, True, (30, 30, 30))
-            sr = s.get_rect(center=(cx, cy))
-            self.screen.blit(s, sr)
+
+            # Sprite do objeto (se disponível e não for tile ELEVADO que já foi desenhado)
+            cel = self.mundo.celula(obj.col, obj.linha)
+            if cel and cel.tipo != TipoTile.ELEVADO:
+                # Objeto solto no chão — desenha ícone colorido
+                pygame.draw.rect(self.screen, COR_OBJETO,
+                                 (x + 8, y + 8, CELL - 16, CELL - 16),
+                                 border_radius=3)
+                icone = {"nota": "N", "item": "I", "porta": "P",
+                         "armadilha": "!", "estante": "L",
+                         "arquivo": "A", "altar": "*"}.get(obj.tipo, "?")
+                s = self.f_normal.render(icone, True, (30, 30, 30))
+                self.screen.blit(s, s.get_rect(center=(cx, cy)))
+
+            # Prompt [E] quando jogador está adjacente
+            dist = abs(obj.col - jc) + abs(obj.linha - jl)
+            if dist <= 1:
+                prompt = self.f_normal.render("[E]", True, (255, 230, 100))
+                self.screen.blit(prompt, (x + 2, y + 2))
 
     def _desenhar_inimigos(self):
         for ent in self.inimigos:

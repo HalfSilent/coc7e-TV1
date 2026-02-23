@@ -240,12 +240,20 @@ class TelaMundo:
         masmorra_dados = get_masmorra(masmorra_id)
         mundo = Mundo(masmorra_dados["mapa"]) if masmorra_dados else None
 
+        # Tema visual (para sprites) — usa "padrao" se não definido
+        tema = masmorra_dados.get("tema", "padrao") if masmorra_dados else "padrao"
+
+        # Objetos interativos do mapa (novo sistema)
+        objetos_mapa = masmorra_dados.get("objetos") if masmorra_dados else None
+
         tela = TelaMasmorra(
             screen=self.screen,
             jogador=self.estado.jogador,
             mundo=mundo,
             inimigos=masmorra_dados.get("inimigos") if masmorra_dados else None,
+            objetos=objetos_mapa,
             nome_local=masmorra_dados.get("nome", masmorra_id) if masmorra_dados else masmorra_id,
+            tema=tema,
         )
 
         # Passa inventário e arma já equipados para a masmorra
