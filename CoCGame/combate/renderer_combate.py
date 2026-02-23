@@ -26,6 +26,26 @@ from engine.entidade import Entidade, Jogador, Inimigo
 
 
 # ══════════════════════════════════════════════════════════════
+# SANITIZAÇÃO DE TEXTO (fontes bitmap não suportam emoji/unicode)
+# ══════════════════════════════════════════════════════════════
+
+_EMOJI_SUBST = {
+    "⚔": "[ATQ]", "🚶": ">>", "💀": "[X]",  "✅": "[OK]",
+    "⏳": "...",  "🔥": "[FOGO]", "💦": "~",  "💨": "~",
+    "❌": "[X]",  "🌍": "[area]", "💊": "[+HP]","🔄": "[rlod]",
+    "🏃": "[fuga]","💥": "[rec]", "🕵": "[ocu]", "🌿": "[arb]",
+    "→": "->",   "──": "--",    "✦": "*",    "☁": "~",
+    "✝": "+",   "●": "#",     "○": ".",
+}
+
+def _limpar_texto(texto: str) -> str:
+    """Substitui emojis por ASCII e remove chars fora do range latin-1."""
+    for sym, sub in _EMOJI_SUBST.items():
+        texto = texto.replace(sym, sub)
+    return "".join(c if ord(c) < 256 else "?" for c in texto)
+
+
+# ══════════════════════════════════════════════════════════════
 # CONSTANTES VISUAIS
 # ══════════════════════════════════════════════════════════════
 
@@ -349,7 +369,7 @@ class RendererCombate:
 
         # Indicador de scroll acima
         if inicio > 0:
-            seta = font_normal.render("▲ mais acima", True, (120, 120, 160))
+            seta = font_normal.render("^^ mais acima", True, (120, 120, 160))
             superficie.blit(seta, (x + pad, cy))
             cy += seta.get_height()
 
@@ -387,7 +407,7 @@ class RendererCombate:
 
         # Indicador de scroll abaixo
         if fim < total:
-            seta = font_normal.render(f"▼ +{total - fim} mais", True, (120, 120, 160))
+            seta = font_normal.render(f"vv +{total - fim} mais", True, (120, 120, 160))
             superficie.blit(seta, (x + pad, cy))
             cy += seta.get_height()
 
@@ -403,20 +423,31 @@ class RendererCombate:
         for linha_log in log_combate[-8:]:
             if cy + 16 > h_tela - 46:
                 break
+            # Determina cor com o texto original (antes de sanitizar)
             cor = (180, 180, 180)
             if "CRÍTICO" in linha_log:       cor = (255, 220, 0)
             if "🔥" in linha_log:            cor = (255, 100, 20)
             if "FUMBLE" in linha_log:        cor = (220, 60, 60)
             if "morr" in linha_log.lower():  cor = (180, 50, 50)
             if "cura" in linha_log.lower():  cor = (80, 200, 80)
+            if "[X]" in linha_log or "derrotado" in linha_log.lower(): cor = (220, 80, 80)
+
+            # Sanitiza para fontes bitmap (VT323/SpecialElite não suportam emoji)
+            linha_log = _limpar_texto(linha_log)
 
             # Quebra linha longa
             max_chars = max(1, (largura - pad * 2) // 7)
             while len(linha_log) > max_chars:
                 parte, linha_log = linha_log[:max_chars], linha_log[max_chars:]
-                tl = font_normal.render(parte, True, cor)
+                try:
+                    tl = font_normal.render(parte, True, cor)
+                    superficie.blit(tl, (x + pad, cy))
+                    cy += tl.get_height()
+                except Exception:
+                    pass
+            try:
+                tl = font_normal.render(linha_log, True, cor)
                 superficie.blit(tl, (x + pad, cy))
-                cy += tl.get_height()
-            tl = font_normal.render(linha_log, True, cor)
-            superficie.blit(tl, (x + pad, cy))
-            cy += tl.get_height() + 1
+                cy += tl.get_height() + 1
+            except Exception:
+                pass

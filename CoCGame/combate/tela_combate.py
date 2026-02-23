@@ -99,6 +99,9 @@ class TelaCombate:
         # Posiciona jogador e inimigos no grid
         self._posicionar_entidades()
 
+        # Log — deve ser inicializado ANTES do gerenciador disparar eventos
+        self.log_combate: List[str] = []
+
         # Gerenciador de combate
         self.gerenciador = GerenciadorCombate(
             self.mundo,
@@ -139,9 +142,6 @@ class TelaCombate:
         self.f_titulo  = get_font("titulo", 20)
         self.f_normal  = get_font("hud", 16)
         self.f_grande  = get_font("titulo", 28)
-
-        # Log
-        self.log_combate: List[str] = []
 
         # Estado de fuga
         self._tentativa_fuga = False
@@ -639,8 +639,10 @@ class TelaCombate:
 
         # AP indicator
         if p:
+            cheios  = "#" * min(p.ap_atual, 10)
+            vazios  = "." * min(max(0, p.ap_maximo - p.ap_atual), 10)
             ap_txt = self.f_titulo.render(
-                f"AP: {'●' * p.ap_atual}{'○' * (p.ap_maximo - p.ap_atual)}",
+                f"AP: {cheios}{vazios}",
                 True, (200, 200, 80)
             )
             self.screen.blit(ap_txt, (self.area_hud.left + 10, 10))
