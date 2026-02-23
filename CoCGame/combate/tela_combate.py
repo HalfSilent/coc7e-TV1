@@ -42,6 +42,7 @@ from engine.combate.gerenciador import (
 from combate.renderer_combate import RendererCombate, CELL_SIZE
 from combate.cards import Card, montar_deck_investigador, rolar_dado, efeito_chao_para_enum
 from gerenciador_assets import get_font, garantir_fontes
+from engine.audio_manager import audio
 
 
 # ══════════════════════════════════════════════════════════════
@@ -299,6 +300,7 @@ class TelaCombate:
             if estado == EstadoCombate.TURNO_JOGADOR:
                 self.gerenciador.iniciar_movimento()
                 self.celulas_movimento = set(self.gerenciador.celulas_highlight)
+                audio.play_sfx("menu_open", volume=0.3)
 
         elif key == pygame.K_f:
             # Tentativa de fuga
@@ -397,6 +399,13 @@ class TelaCombate:
             if cel and cel.ocupante and cel.ocupante is not self.jogador:
                 self._adicionar_log(f"Inimigo: {cel.ocupante.nome} — HP {cel.ocupante.hp}")
 
+        elif estado == EstadoCombate.ESCOLHENDO_MOVIMENTO:
+            # BUGFIX: confirmar destino de movimento ao clicar no grid
+            ok = self.gerenciador.confirmar_alvo(col, linha)
+            if ok:
+                audio.play_sfx("step_stone", volume=0.6)
+            self._limpar_highlights()
+
         elif estado == EstadoCombate.ESCOLHENDO_ALVO:
             card = getattr(self, "_modo_ataque_card", None)
             if card:
@@ -459,6 +468,11 @@ class TelaCombate:
             dano = _rolar_dano_coc(ef["dano"], bd, nivel)
             real = cel.ocupante.sofrer_dano(dano)
             self._adicionar_log(f"{card.nome} -> {cel.ocupante.nome}: {real} dano [{nivel}]")
+            # SFX: arma de fogo (alcance >= 5) ou corpo-a-corpo
+            if card.alcance >= 5:
+                audio.play_sfx("hit_gun")
+            else:
+                audio.play_sfx("hit_punch")
             if not cel.ocupante.vivo:
                 self._adicionar_log(f"{cel.ocupante.nome} foi derrotado!")
                 cel.ocupante = None
@@ -615,6 +629,8 @@ class TelaCombate:
         return "vitoria"
 
     def _tela_resultado(self, resultado: str):
+        sfx_map = {"vitoria": "combat_win", "derrota": "combat_lose", "fuga": "menu_select"}
+        audio.play_sfx(sfx_map.get(resultado, "menu_select"))
         cores = {
             "vitoria": (50, 200, 100),
             "derrota": (200, 50, 50),

@@ -34,6 +34,7 @@ from engine.entidade import Entidade, Jogador, Inimigo, Engendro
 from engine.grid.tiles import TileLoader
 from engine.grid.objeto import ObjetoMasmorra, OpcaoMenu
 from engine.inventario_itens import criar_item
+from engine.audio_manager import audio
 from combate.tela_combate import TelaCombate
 from dialogo.tela_dialogo import TelaDialogo
 from ui.tela_inventario import TelaInventario
@@ -395,6 +396,7 @@ class TelaMasmorra:
         nomes = ", ".join(e.nome for e in inimigos_proximos)
         self._msg(f"⚔ Combate: {nomes}!")
         self._renderizar()
+        audio.play_sfx("combat_start")
         pygame.time.wait(400)
 
         # CoC 7e: combate acontece no mesmo espaço — sem teleporte para arena separada
@@ -446,6 +448,8 @@ class TelaMasmorra:
         if item:
             ok, msg = self.jogador.inventario.adicionar(item)
             self._msg(msg)
+            if ok:
+                audio.play_sfx("item_pickup")
             # Auto-equipa primeira arma encontrada
             if item.id in [i.id for i in self.jogador.inventario.armas()]:
                 if not self.jogador.inventario.arma_equipada:
@@ -470,6 +474,7 @@ class TelaMasmorra:
         Exibe popup de opções para um ObjetoMasmorra com opcoes_menu.
         Processa rolagem de perícia e concede pistas/itens.
         """
+        audio.play_sfx("page_turn", volume=0.7)
         import textwrap
         w, h = self.screen.get_size()
 
@@ -614,6 +619,7 @@ class TelaMasmorra:
                 # Registra pista no jogador (se tiver atributo)
                 if hasattr(self.jogador, "pistas"):
                     self.jogador.pistas.append(op.pista)
+                audio.play_sfx("clue_found")
                 self._msg(f"[Pista] {op.pista[:50]}..." if len(op.pista) > 50 else f"[Pista] {op.pista}")
 
             if op.item:
