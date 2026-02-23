@@ -1,0 +1,66 @@
+{
+  "jogador": {
+    "id": "jogador",
+    "nome": "Investigador",
+    "tipo": "investigador",
+    "sprite_id": 0,
+    "ia": "nenhuma",
+    "stats": {
+      "hp": 12, "san": 65, "forca": 55, "destreza": 65,
+      "inteligencia": 75, "constituicao": 60, "educacao": 80,
+      "aparencia": 60, "poder": 55
+    },
+    "inventario": [],
+    "background": "Investigador contratado para descobrir o paradeiro de Edgar Soares.",
+    "spawn_col": 2.0,
+    "spawn_linha": 5.0
+  },
+  "guarda_entrada": {
+    "id": "guarda_entrada",
+    "nome": "Guarda da Entrada",
+    "tipo": "cultista",
+    "sprite_id": 3,
+    "ia": "agressivo",
+    "stats": {
+      "hp": 10, "san": 0, "forca": 60, "destreza": 50,
+      "inteligencia": 40, "constituicao": 55, "educacao": 30,
+      "aparencia": 45, "poder": 40
+    },
+    "inventario": [],
+    "background": "",
+    "spawn_col": 11.0,
+    "spawn_linha": 5.0
+  },
+  "cultista_altar": {
+    "id": "cultista_altar",
+    "nome": "Cultista de Valverde",
+    "tipo": "cultista",
+    "sprite_id": 4,
+    "ia": "reativo",
+    "stats": {
+      "hp": 8, "san": 0, "forca": 50, "destreza": 55,
+      "inteligencia": 60, "constituicao": 45, "educacao": 50,
+      "aparencia": 40, "poder": 70
+    },
+    "inventario": [],
+    "background": "Um seguidor fanático do Dr. Valverde.",
+    "spawn_col": 7.0,
+    "spawn_linha": 4.0
+  },
+  "engendro_valverde": {
+    "id": "engendro_valverde",
+    "nome": "Engendro de Valverde",
+    "tipo": "engendro",
+    "sprite_id": 6,
+    "ia": "agressivo",
+    "stats": {
+      "hp": 22, "san": 0, "forca": 85, "destreza": 30,
+      "inteligencia": 20, "constituicao": 70, "educacao": 0,
+      "aparencia": 0, "poder": 90
+    },
+    "inventario": [],
+    "background": "",
+    "spawn_col": 11.0,
+    "spawn_linha": 6.0
+  }
+}

@@ -1,0 +1,732 @@
+:: inicio [inicio]
+@set san = 10
+@set motivacao = ""
+@set pesquisou_valverde = false
+@set falou_benedito = false
+@set encontrou_retratos = false
+@set conhece_ritual = false
+@set conhece_plano = false
+@set salvou_cecilia = false
+@set fragmento_destruido = false
+@set guia_derrotado = false
+@set pistas = 0
+
+Rio de Janeiro, 1923.
+
+A cidade dorme sob um calor umido e sufocante, mas na Vila Operaria do Catumbi, o sono tornou-se luxo impossivel. Ha tres semanas, moradores acordam as tres da manha com o mesmo pesadelo: uma escadaria sem fim descendo para as profundezas, e no fundo, algo que observa.
+
+Foi quando Dona Cecilia, lavadeira e matriarca respeitada do bairro, desapareceu.
+
+O Professor Evaristo Malheiros, da Faculdade de Arqueologia do Rio de Janeiro, entrou em contato. Ele precisa de investigadores discretos para um assunto urgente e pessoal.
+
+O que motiva voce a aceitar?
+
+[[Aceitar por dinheiro->motivo_dinheiro]]
+[[Aceitar por curiosidade->motivo_curiosidade]]
+[[Aceitar por senso de justica->motivo_justica]]
+[[Recusar o caso->recusa]]
+
+:: motivo_dinheiro
+@set motivacao = dinheiro
+
+Dinheiro. Simples assim.
+
+O professor ofereceu uma quantia generosa pela discricao e eficiencia. Voce nao precisa acreditar em coisas sobrenaturais para trabalhar por dinheiro.
+
+Um caso e um caso.
+
+[[Ir ao escritorio do professor->escritorio_malheiros]]
+
+:: motivo_curiosidade
+@set motivacao = curiosidade
+
+Curiosidade. Sempre foi sua fraqueza.
+
+Desaparecimentos, simbolos estranhos, uma sociedade espiritualista... isso e mais interessante do que os casos habituais. Voce quer ver onde isso vai dar.
+
+[[Ir ao escritorio do professor->escritorio_malheiros]]
+
+:: motivo_justica
+@set motivacao = justica
+
+Justica. Dona Cecilia era uma pessoa real.
+
+Alguem precisa encontra-la. Alguem precisa se importar. Voce decide que sera voce.
+
+[[Ir ao escritorio do professor->escritorio_malheiros]]
+
+:: recusa
+
+Voce declina o convite do professor.
+
+Tres dias depois, le nos jornais: "Novo desaparecimento no Catumbi. Terceiro este mes."
+
+Voce dobra o jornal e olha pela janela. A cidade nao para.
+
+Mas voce nao consegue parar de pensar na escadaria que apareceu nos seus sonhos naquela noite.
+
+[[Reconsiderar e aceitar->escritorio_malheiros]]
+
+:: escritorio_malheiros [narrativa]
+@set pistas = 1
+
+O escritorio do Professor Malheiros e apertado e empoeirado, com pilhas de livros atingindo o teto e mapas antigos cobrindo as paredes. O velho academico, de oculos grossos e dedos manchados de tinta, os recebe com urgencia mal disfarcada.
+
+"Preciso que voces encontrem algo para mim. Algo que foi roubado. Algo que... nao deveria existir."
+
+Sobre a mesa, uma fotografia desbotada mostra uma pedra esculpida com simbolos em espiral. O professor a chama de O Fragmento. Segundo ele, foi retirada de uma escavacao clandestina no Catumbi semanas antes dos desaparecimentos comeцarem.
+
+Malheiros esta nervoso. Mais do que nervoso. Com medo.
+
+[[Perguntar sobre o Fragmento->fragmento_descricao]]
+[[Perguntar sobre os desaparecimentos->desaparecimentos_info]]
+[[Ir direto ao bairro investigar->bairro_catumbi]]
+
+:: fragmento_descricao
+@set pistas = 2
+
+"A pedra tem pelo menos quinhentos anos", diz Malheiros, limpando os oculos com o casaco. "Os simbolos nao correspondem a nenhuma cultura catalogada. Mas o que me preocupa e o efeito que ela tem sobre as pessoas."
+
+Ele hesita.
+
+"Quem passa muito tempo perto dela comeca a sonhar. Sempre a mesma coisa. Uma escadaria descendo para o escuro."
+
+Ele empurra a fotografia em sua direcao.
+
+"Ela foi roubada do meu escritorio ha duas semanas. Exatamente quando os desaparecimentos comecaram."
+
+[[Perguntar sobre os desaparecimentos->desaparecimentos_info]]
+[[Ir ao bairro investigar->bairro_catumbi]]
+
+:: desaparecimentos_info
+@set pistas = 2
+
+"Tres pessoas", conta Malheiros, contando nos dedos. "Cecilia Nascimento, lavadeira. Joao Pequeno, carvoeiro. E uma crianca, Pedro, oito anos."
+
+Ele se levanta e aponta para um mapa do Catumbi na parede.
+
+"Todos moravam num raio de duas quadras do Casarao da Rua das Almas, numero sete. Uma construcao do seculo passado que pertenceu ao Coronel Augusto Valverde."
+
+Pausa. Ele desvia o olhar.
+
+"Ha uma sociedade que usa o local. Os Filhos do Degrau. Mas eu nao sei mais nada sobre eles."
+
+[[Pressionar Malheiros pela hesitacao->questionar_malheiros]]
+[[Ir ao bairro investigar->bairro_catumbi]]
+
+:: questionar_malheiros
+@set pistas = 3
+@set conhece_sociedade = true
+
+Voce percebe a hesitacao. Ele sabe mais do que esta dizendo.
+
+Pressionado, Malheiros suspira fundo.
+
+"Eu fui membro. Quando jovem. Uma sociedade espiritualista inofensiva, pensei. Rituais poeticos, filosofia oculta."
+
+Ele olha para as maos.
+
+"Mas o lider atual chegou ha tres anos com O Fragmento e uma interpretacao diferente dos textos fundadores. Quando percebi o que ele pretendia fazer, roubei a pedra."
+
+"Se eles a recuperaram..."
+
+Ele nao termina a frase.
+
+[[Ir ao bairro investigar->bairro_catumbi]]
+
+:: bairro_catumbi [narrativa]
+
+O Catumbi recebe voces com um silencio que nao combina com um bairro operario durante o dia. Criancas nao brincam nas ruas. Cachorros ficam deitados, focinhando o chao.
+
+Nas paredes de alguns predios, entre grafitos e anuncios de festa, alguem rabiscou escadarias descendo para o escuro.
+
+Sempre escadarias.
+
+[[Entrar no botequim do Seu Benedito->botequim_benedito]]
+[[Examinar um dos desenhos nas paredes->examinar_desenho]]
+[[Pesquisar o casarao na Prefeitura->pesquisa_prefeitura]]
+[[Ir diretamente ao Casarao da Rua das Almas->casarao_dia]]
+
+:: botequim_benedito
+@set falou_benedito = true
+@set pistas = 3
+
+Seu Benedito e um homem de uns sessenta anos, barba branca e olhos que ja viram muita coisa. Serve o cafe devagar, como se cada movimento custasse energia.
+
+"Voces sao de fora, ne?" Sem olhar para voces. "Os que sao daqui ja nao fazem perguntas."
+
+Mas ele fala. Talvez porque precise.
+
+"Tres desaparecidos. Todos vizinhos do Casarao. Ninguem vai la depois das seis. Os Filhos do Degrau entram e saem na calada da noite."
+
+Ele aponta para a parede atras do balcao. Um desenho de escadaria, carvao, tosco mas inconfundivel.
+
+"Acordei e ja estava la. Minha propria parede."
+
+[[Perguntar mais sobre os Filhos do Degrau->benedito_mais]]
+[[Examinar o desenho na parede->examinar_desenho_botequim]]
+[[Ir ao Casarao->casarao_dia]]
+
+:: benedito_mais
+@set pistas = 4
+
+"O Guia apareceu ha uns dois anos", diz Benedito, voz mais baixa. "Homem comum, de terno, educado. Mas as pessoas que entram no casarao com ele... saem diferentes."
+
+Ele esfrega o rosto.
+
+"Ou nao saem."
+
+"Cecilia foi la uma vez, curiosa. Eu avisei. Avisei ela."
+
+Ele vira de costas.
+
+"Desculpem. Preciso fechar mais cedo hoje."
+
+[[Examinar o desenho na parede->examinar_desenho_botequim]]
+[[Ir ao Casarao->casarao_dia]]
+
+:: examinar_desenho_botequim
+@san: -1
+
+Voce se aproxima do desenho na parede do botequim.
+
+De perto, e mais detalhado do que parecia. Os degraus sao numerados. Voce conta quarenta e tres.
+
+E no fundo da escadaria desenhada, no ponto onde deveria haver um chao, ha apenas um olho.
+
+Por um momento, o olho parece piscar.
+
+Voce pisca. O olho e apenas carvao na parede. Mas o bater do seu coracao leva uns minutos para voltar ao normal.
+
+[[Ir ao Casarao->casarao_dia]]
+
+:: examinar_desenho
+@san: -1
+
+Os desenhos nas paredes do bairro sao todos iguais: uma escadaria descendo para o escuro, feita com carvao ou tinta preta.
+
+De perto, os degraus sao numerados. Quarenta e tres.
+
+No fundo, em vez de um chao, ha algo que nao e bem um circulo e nao e bem um olho, mas e as duas coisas ao mesmo tempo.
+
+Voce se afasta rapidamente.
+
+[[Entrar no botequim->botequim_benedito]]
+[[Pesquisar o casarao na Prefeitura->pesquisa_prefeitura]]
+[[Ir ao Casarao->casarao_dia]]
+
+:: pesquisa_prefeitura
+@set pesquisou_valverde = true
+@set pistas = 4
+@teste: Biblioteca | sucesso:pesquisa_sucesso | falha:pesquisa_basica
+
+Os arquivos da Prefeitura guardam tudo, se voce souber onde procurar.
+
+O Casarao da Rua das Almas, numero sete, foi construido em 1887 pelo Coronel Augusto Valverde. Engenheiro militar, macon, colecionador de artefatos pre-colombianos e, segundo anotacoes marginais de um servidor da epoca, "dado a praticas de ciencias ocultas".
+
+Valverde desapareceu em 1891. O casarao passou por tres proprietarios diferentes sem que ninguem ficasse mais de seis meses.
+
+A ultima anotacao e de 1902: "Pendencias de obras nao autorizadas. Construcao subterranea sem licenca. Proprietario nao localizado para notificacao."
+
+Construcao subterranea.
+
+[[Ir ao Casarao->casarao_dia]]
+
+:: pesquisa_sucesso
+@set pesquisou_valverde = true
+@set conhece_camara = true
+@set pistas = 5
+
+Voce encontra uma ficha esquecida no fundo de uma pasta selada: um esboço tecnico assinado pelo proprio Valverde.
+
+A construcao subterranea era uma camara circular, escavada exatamente sob o centro do casarao. Profundidade: quatorze metros. Proposito anotado: "Amplificacao de ressonancia".
+
+Ha uma planta do subsolo. Voce a copia.
+
+[[Ir ao Casarao->casarao_dia]]
+
+:: pesquisa_basica
+
+Os arquivos revelam o basico: casarao construido em 1887, proprietario desaparecido em 1891, obras sem licenca em 1902.
+
+Nada sobre o que ha embaixo. Os servidores da epoca eram discretos, ou com medo.
+
+[[Ir ao Casarao->casarao_dia]]
+
+:: casarao_textos_decifrado
+@set conhece_ritual = true
+@set conhece_fragmento_papel = true
+@set pistas = 6
+
+Os textos sao instrucoes para um ritual chamado "A Descida". Voce decifra tudo.
+
+"O Que Habita o Fundo" e uma entidade anterior ao mundo. A Camara foi construida sobre um ponto de contato onde a barreira entre mundos e perigosamente fina.
+
+O Fragmento e "A Chave que Chama": nao abre a porta — chama a entidade para atravessa-la. E quem segura a Chave nao abre nada. E aberto.
+
+Ha uma nota marginal em letra diferente: "O Guia mente. O ritual nao convoca. Consome."
+
+[[Examinar a sala ao fundo->casarao_retratos]]
+[[Inspecionar a escadaria->casarao_escadaria]]
+[[Voltar e confrontar Malheiros->confronto_malheiros]]
+
+:: casarao_textos_parcial
+@set conhece_ritual = true
+@set pistas = 5
+
+Os textos sao dificeis de ler, escritos numa caligrafia arcaica, mas com paciencia e possivel decifrar partes.
+
+Sao instrucoes para um ritual chamado "A Descida".
+
+"O Que Habita o Fundo" e descrito como uma entidade anterior ao mundo. A Camara de Valverde foi construida sobre um "ponto de contato" onde a barreira entre o mundo fisico e o Alem e perigosamente fina.
+
+O Fragmento e chamado de "A Chave que Chama": nao abre a porta, mas chama a entidade para atravessa-la.
+
+"Quem segura a Chave nao e o que abre a porta. E o que e aberto."
+
+[[Examinar a sala ao fundo->casarao_retratos]]
+[[Inspecionar a escadaria->casarao_escadaria]]
+[[Voltar e confrontar Malheiros->confronto_malheiros]]
+
+:: casarao_retratos_malheiros
+@set encontrou_retratos = true
+@set sabe_malheiros_membro = true
+@set pistas = 6
+
+A sala ao fundo e uma sala de reunioes. Mesa longa, cadeiras, e nas paredes: retratos fotograficos dos membros dos Filhos do Degrau.
+
+Homens e mulheres de diferentes idades, todos vestidos formalmente, todos com o mesmo sorriso levemente fora de lugar.
+
+Voce estuda cada rosto com cuidado. E ali, na segunda fila, terceiro da esquerda, claramente mais jovem mas inconfundivel: o Professor Evaristo Malheiros.
+
+O sorriso dele na foto e identico aos outros. Voce tira a fotografia da parede.
+
+[[Inspecionar a escadaria->casarao_escadaria]]
+[[Ir confrontar Malheiros agora->confronto_malheiros]]
+
+:: casarao_retratos_simples
+@set encontrou_retratos = true
+@set pistas = 5
+
+A sala ao fundo e uma sala de reunioes com retratos nas paredes: membros dos Filhos do Degrau. Rostos desconhecidos, todos com um sorriso levemente fora de lugar.
+
+Voce tira uma das fotografias da parede, sem saber ao certo por que.
+
+[[Inspecionar a escadaria->casarao_escadaria]]
+[[Voltar e confrontar Malheiros->confronto_malheiros]]
+
+:: casarao_escadaria_rastro
+@set viu_rastro_cecilia = true
+
+A escadaria de pedra desce alem do que a luz alcanca. Cada degrau e esculpido com figuras que parecem ter uma sequencia, uma narrativa.
+
+Comecam com formas simples. Viram mais complexas. Mais organicas. Nos ultimos degraus visiveis, as figuras parecem quase humanas.
+
+Um cadeado moderno tranca uma grade de ferro na entrada.
+
+No chao, a seus pes, um rastro de sandalia feminina apontando para baixo. Olhando mais de perto, voce identifica outro rastro, de bota pesada, descendo junto.
+
+Dois pares. Alguem levou Cecilia.
+
+[[Voltar e confrontar Malheiros->confronto_malheiros]]
+
+:: casarao_escadaria_basico
+
+A escadaria de pedra desce alem do que a luz alcanca. Cada degrau e esculpido com figuras que parecem ter uma sequencia, uma narrativa.
+
+Comecam com formas simples. Viram mais complexas. Mais organicas. Nos ultimos degraus visiveis, as figuras parecem quase humanas.
+
+Um cadeado moderno tranca uma grade de ferro na entrada.
+
+No chao, a seus pes, um rastro de sandalia feminina apontando para baixo.
+
+A sandalia de Dona Cecilia.
+
+[[Voltar e confrontar Malheiros->confronto_malheiros]]
+
+:: casarao_dia [narrativa]
+
+O numero sete da Rua das Almas e uma construcao colonial deteriorada, com janelas tapadas por madeira apodrecida e um portao de ferro enferrujado. A tinta descascou ha decadas, expondo uma pedra escura e umida.
+
+Entre o musgo e as rachaduras da fachada, para quem sabe o que procurar: os mesmos simbolos em espiral da fotografia do professor.
+
+O portao esta trancado, mas a fechadura e velha.
+
+[[Forcar a entrada->casarao_interior]]
+[[Procurar uma entrada alternativa->casarao_interior]]
+
+:: casarao_interior
+
+O interior cheira a umidade e algo mais: incenso queimado ha pouco tempo, talvez ontem.
+
+As salas do andar terreo estao decoradas como um templo. Toalhas pretas nas janelas. Velas em candelabros de bronze. Nas paredes, pinturas e textos em portugues arcaico.
+
+Tres caminhos se abrem. Uma sala ao fundo. Textos nas paredes. E, parcialmente oculta por uma estante, uma escada de pedra descendo para o escuro.
+
+[[Ler as pinturas e textos->casarao_textos]]
+[[Examinar a sala ao fundo->casarao_retratos]]
+[[Inspecionar a escadaria->casarao_escadaria]]
+
+:: casarao_textos
+@set conhece_ritual = true
+@set pistas = 5
+@teste: Ocultismo | sucesso:casarao_textos_decifrado | falha:casarao_textos_parcial
+
+:: casarao_retratos
+@set encontrou_retratos = true
+@set pistas = 5
+@teste: Psicologia | sucesso:casarao_retratos_malheiros | falha:casarao_retratos_simples
+
+:: casarao_escadaria
+@teste: Localizar | sucesso:casarao_escadaria_rastro | falha:casarao_escadaria_basico
+
+:: confronto_malheiros [narrativa]
+
+Voce encontra Malheiros no escritorio, exatamente onde o deixou. Mas agora voce tem a fotografia.
+
+Quando voce a coloca sobre a mesa, o professor fecha os olhos por um longo momento.
+
+"Quanto voce sabe?", pergunta ele, por fim.
+
+[[Contar tudo que descobriu->malheiros_confissao]]
+[[Mostrar apenas a foto e esperar->malheiros_confissao]]
+
+:: malheiros_confissao
+@set conhece_plano = true
+
+Malheiros confessa.
+
+Os Filhos do Degrau eram, no inicio, uma sociedade espiritualista inofensiva. Reunioes, leituras, debates filosoficos. Ele entrou jovem, cheio de curiosidade intelectual.
+
+Mas o Guia atual chegou com O Fragmento e uma interpretacao diferente dos textos fundadores. Segundo ele, A Descida nao era uma metafora espiritual. Era um procedimento.
+
+"Eu percebi o que ele pretendia fazer. Roubei o Fragmento."
+
+"Mas eles o recuperaram."
+
+"Estao usando os cativos como ancoras. Para manter a porta aberta enquanto O Que Habita atravessa. Cecilia e os outros ainda estao vivos. A entidade nao precisa de corpos mortos. Precisa de mentes despertas que nao conseguem mais fechar os olhos."
+
+[[Perguntar como parar o ritual->como_parar]]
+[[Planejar a entrada noturna no casarao->noite_casarao]]
+
+:: como_parar
+
+"O Fragmento. Se voces o destruirem, a conexao se rompe."
+
+Ele hesita.
+
+"Mas destrui-lo durante o ritual... a energia liberada pode ser fatal para todos na camara."
+
+Pausa longa.
+
+"Ou voces podem tentar despertar os cativos antes que a porta abra completamente. Se eles acordarem por conta propria, a ancoragem se desfaz sem explosao."
+
+"Ha tambem O Guia. Se ele for... removido da equacao..."
+
+Ele nao termina.
+
+Antes que possa dizer mais, a janela do escritorio se abre sozinha.
+
+[[Continuar->malheiros_possuido]]
+
+:: malheiros_possuido
+@san: -2
+
+O vento apaga as velas.
+
+No escuro, voce ouve a cadeira de Malheiros ranger. Quando a luz volta, o professor esta de pe, completamente imovil, com um sorriso que nao e dele.
+
+Seus olhos agora sao dois espacos vazios onde deveria haver cor.
+
+"O Guia quer conhece-los", diz ele, com a voz de muitos.
+
+Ele se senta de volta. Fecha os olhos. Quando os abre, Malheiros esta de volta, confuso e assustado, sem memoria dos ultimos trinta segundos.
+
+"O que aconteceu?", ele pergunta.
+
+Voce nao responde.
+
+[[Ir para o casarao esta noite->noite_casarao]]
+
+:: noite_casarao [narrativa]
+
+A noite cai sobre o Catumbi como um pano pesado.
+
+Voces retornam ao Casarao da Rua das Almas. O portao, que estava trancado durante o dia, esta agora completamente aberto.
+
+A escadaria espera.
+
+O cadeado que bloqueava a grade foi removido de dentro.
+
+[[Descer a escadaria->descida_escadaria]]
+[[Observar e esperar antes de entrar->espera_observacao]]
+
+:: espera_observacao
+
+Voces observam da rua por alguns minutos.
+
+Tres figuras entram pelo portao em silencio, de terno e chapeu, sem olhar para os lados. Entram, e o portao fica aberto.
+
+Nenhuma luz nas janelas.
+
+Do chao, voces juram sentir uma vibracao. Nao um som. Uma frequencia. Nos ossos.
+
+[[Descer a escadaria->descida_escadaria]]
+
+:: descida_escadaria
+@san: -2
+
+Quarenta e tres degraus.
+
+Voces contam. Nao ha como nao contar.
+
+Cada degrau e mais frio que o anterior. O ar fica mais pesado. A lanterna ilumina as figuras esculpidas nas paredes, que contam uma historia: algo que veio de muito longe, que esperou por muito tempo, que quer voltar.
+
+No vigesimo degrau, alguem comeca a ouvir uma frequencia baixa. Nao com os ouvidos. Com os dentes. Com os ossos. Atras dos olhos.
+
+No quadragesimo terceiro degrau, voces chegam ao fundo.
+
+[[Entrar na camara->camara_valverde]]
+
+:: camara_valverde [narrativa]
+
+A Camara de Valverde e uma sala circular, perfeitamente construida, com o teto sustentado por colunas gravadas com os simbolos espirais. No centro, um altar de pedra negra.
+
+Sobre o altar: O Fragmento.
+
+Ao redor do altar, de joelhos em circulo, estao os desaparecidos. Cecilia. Joao. E o menino Pedro, com os olhos fechados. Todos respiram em uniссo, todos em sintonia com aquela frequencia impossivel.
+
+E de pe sobre o altar, com os bracos abertos, esta O Guia. Seu rosto e o de um homem comum: sessenta anos, cabelo branco, terno escuro. Alguem que voce passaria na rua sem olhar duas vezes.
+
+Seus olhos nao sao humanos.
+
+"Bem-vindos ao ultimo degrau. Voces chegaram exatamente a tempo. A porta precisa de testemunhas para abrir."
+
+[[Atacar O Guia imediatamente->combate_guia]]
+[[Tentar despertar os cativos->despertar_cativos]]
+[[Destruir o Fragmento no altar->tentar_destruir]]
+[[Negociar tempo com O Guia->negociar_guia]]
+
+:: negociar_guia
+@san: -1
+
+"Voces querem entender", diz O Guia, descendo do altar com passos medidos. "Isso e sabedoria. O Que Habita nao tem pressa. Tem eternidade."
+
+Ele se aproxima.
+
+"Deixem-me mostrar o que esta do outro lado da porta. Apenas olhar. Apenas ver."
+
+Ha algo na voz dele que faz sentido. Que parece razoavel.
+
+Voce percebe, em algum lugar no fundo da sua mente, que esse e exatamente o perigo.
+
+[[Resistir e atacar O Guia->combate_guia]]
+[[Resistir e despertar os cativos->despertar_cativos]]
+[[Ceder e olhar alem->olhar_alem]]
+
+:: olhar_alem
+@san: -3
+
+Voce olha.
+
+Por um segundo, apenas um segundo, voce ve o que esta do outro lado.
+
+Nao tem forma. Nao tem cor. E anterior a ambos os conceitos. E algo que existe em todas as direcoes simultaneamente, que sonha em geometrias que nao cabem numa mente humana.
+
+Voce fecha os olhos.
+
+O segundo dura para sempre.
+
+Quando voce os abre, O Guia esta sorrindo.
+
+[[Lutar enquanto ainda e possivel->combate_guia]]
+
+:: despertar_cativos
+@set salvou_cecilia = true
+
+Voce se ajoelha perto de Cecilia Nascimento. De perto, ela parece estar dormindo, mas sua respiracao e o unico som que faz, e ela nao responde ao toque.
+
+A frequencia aumenta quando voce tenta sacudi-la.
+
+Voce chama o nome dela. Baixo no inicio. Depois mais alto.
+
+Cecilia abre os olhos.
+
+Por um momento, eles sao o mesmo espaco vazio dos olhos do Guia. Depois ela pisca.
+
+E Cecilia esta de volta, confusa e assustada.
+
+"Onde estou?", ela sussurra. "Quanto tempo faz?"
+
+O Guia se vira para voces. Pela primeira vez, ele nao esta sorrindo.
+
+[[Despertar os outros cativos tambem->despertar_todos]]
+[[Enfrentar O Guia enquanto ha tempo->combate_guia]]
+
+:: despertar_todos
+@set salvou_cecilia = true
+
+Com Cecilia ajudando, voces acordam Joao e o pequeno Pedro um a um.
+
+A cada cativo que acorda, a frequencia muda. Fica menos constante. Mais irregular.
+
+As paredes da camara comecam a vibrar.
+
+O Guia olha para o altar. Para o Fragmento. Para voces.
+
+"Voces nao entendem o que fizeram", diz ele. Mas ha algo na voz que parece surpresa genuina.
+
+[[Destruir o Fragmento agora->destruir_fragmento]]
+[[Enfrentar O Guia->combate_guia]]
+[[Fugir com os cativos->fuga_cativos]]
+
+:: tentar_destruir
+
+"Interessante", diz O Guia, observando voce se aproximar do altar. "Voce acha que pode simplesmente quebra-la."
+
+Ele nao se move para impedi-lo.
+
+"Va em frente. Descubra o que acontece quando voce rompe uma conexao ativa."
+
+Voce hesita.
+
+[[Destruir mesmo assim->destruir_fragmento]]
+[[Recuar e tentar outra abordagem->camara_valverde]]
+
+:: destruir_fragmento
+@set fragmento_destruido = true
+@san: -2
+
+Voce pega O Fragmento.
+
+E frio de um jeito que nao tem a ver com temperatura. E frio como ausencia. Como o espaco entre estrelas.
+
+Os simbolos espirais parecem se mover sob seus dedos.
+
+Voce o joga contra o chao de pedra com toda a forca.
+
+O Fragmento nao quebra. Racha. E da rachadura sai algo que nao e luz e nao e som mas e as duas coisas ao mesmo tempo, e por um momento o espaco da camara e todos os espacos e nenhum espaco.
+
+Depois: silencio.
+
+O Fragmento e po. Os cativos caem. Os olhos do Guia perdem o brilho impossivel. Ele e apenas um homem velho, confuso, de joelhos.
+
+A frequencia parou.
+
+@if salvou_cecilia == true: fim_vitoria_completa
+[[Sair desta camara->fim_vitoria_parcial]]
+
+:: combate_guia [combate]
+@combate: O Guia (Possuido)
+@san: -1
+
+O Guia avanca.
+
+Nao como um homem avanca. Como algo que usa um homem para se mover.
+
+As colunas da camara comecam a pulsar com a mesma frequencia do altar.
+
+Voce nao tem escolha.
+
+[[Continuar apos o combate->pos_combate]]
+
+:: pos_combate
+@set guia_derrotado = true
+
+O Guia cai. O homem que havia dentro dele, se havia algum ainda, some com o impacto.
+
+A frequencia oscila. As paredes da camara tremem.
+
+Voces tem pouco tempo.
+
+@if salvou_cecilia == true: fim_vitoria_completa
+[[Destruir o Fragmento e sair->destruir_final]]
+
+:: destruir_final
+@set fragmento_destruido = true
+
+Sem o Guia para sustentar o ritual, O Fragmento perde o brilho dos seus simbolos.
+
+Voce o quebra. Apenas pedra velha.
+
+Os cativos despertam ao mesmo tempo, confusos e com fome, como se tivessem dormido por dias.
+
+[[Sair com todos->fim_vitoria_completa]]
+
+:: fuga_cativos
+
+O corredor esta tremendo. Pedacos do teto comecam a cair.
+
+Voces correm. Cecilia segura a mao do menino Pedro. Joao ajuda os que tropecam.
+
+Quarenta e tres degraus para cima parecem quarenta e tres quilometros.
+
+[[Chegar la->fuga_saida]]
+
+:: fuga_saida [narrativa]
+
+Voces saem do casarao segundos antes do teto do primeiro andar ceder.
+
+O desabamento e surdo, pesado, definitivo.
+
+Quando a poeira baixa, o Casarao da Rua das Almas e um monte de pedras.
+
+[[Ver o epilogo->fim_vitoria_parcial]]
+
+:: fim_vitoria_completa [fim]
+@san: 2
+
+EPILOGO: Vitoria Completa
+
+Tres semanas depois, o Rio de Janeiro ja esqueceu.
+
+Cecilia voltou para a vila, mais quieta do que antes, mas presente. Joao retomou o trabalho. Pedro, dizem, parou de falar por um tempo, mas um dia acordou e foi brincar na rua como se nada tivesse acontecido.
+
+O Professor Malheiros fechou o escritorio e viajou para o interior. Nao deixou endereco.
+
+O casarao desabou. Os registros da prefeitura indicam apenas "colapso estrutural por deterioracao".
+
+Voce dorme melhor do que dormia ha meses.
+
+Exceto nas noites de quarta-feira, quando acorda as tres da manha com a sensacao vaga de uma escadaria no sonho. Mas quando voce tenta lembrar, nao ha nada la.
+
+Apenas o escuro. E um silencio que, desta vez, parece seguro.
+
+FIM
+
+:: fim_vitoria_parcial [fim]
+
+EPILOGO: Vitoria Parcial
+
+O casarao desabou. O Fragmento foi destruido.
+
+Mas algo ficou para tras na camara. Uma presenca que nao tem nome e nao tem forma, mas que de vez em quando, nas noites mais quentes do verao carioca, faz a frequencia voltar.
+
+Nao nos ouvidos.
+
+Nos ossos.
+
+Voces venceram. Mas a porta, descobriram, nunca fecha completamente quando ja foi aberta.
+
+FIM
+
+:: fim_fuga [fim]
+@san: -2
+
+EPILOGO: Fuga
+
+Voces saem correndo.
+
+E voces saem vivos. Isso conta.
+
+Mas Cecilia, Joao e Pedro ficaram la embaixo. E O Fragmento continuou no altar. E a porta, seja la o que isso signifique, continuou a se abrir.
+
+Nos meses seguintes, o Catumbi foi evacuado por "risco de subsidencia". O casarao foi demolido pela prefeitura.
+
+Ninguem menciona os tres desaparecidos.
+
+As vezes voce folheia os jornais procurando noticias de outros bairros com os mesmos sintomas. Ja encontrou dois.
+
+A frequencia nunca foi embora completamente.
+
+FIM

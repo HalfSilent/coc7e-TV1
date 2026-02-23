@@ -1,0 +1,46 @@
+{
+  "d_cultista_01": {
+    "id": "d_cultista_01",
+    "titulo": "O Cultista Fala",
+    "no_inicial": "n_aviso",
+    "nos": {
+      "n_aviso": {
+        "id": "n_aviso",
+        "personagem_id": "cultista_altar",
+        "texto": "Você não devia ter vindo até aqui, estranho. Este lugar pertence ao Mestre agora. Saia enquanto ainda pode!",
+        "efeito": "",
+        "escolhas": [
+          {"texto": "Quem é esse 'Mestre'?",         "proximo": "n_mestre"},
+          {"texto": "Onde está Edgar Soares?",        "proximo": "n_edgar"},
+          {"texto": "Saia do meu caminho!",           "proximo": null}
+        ]
+      },
+      "n_mestre": {
+        "id": "n_mestre",
+        "personagem_id": "cultista_altar",
+        "texto": "O Dr. Valverde encontrou o Caminho Verdadeiro nas profundezas. Os rituais já começaram — quando a Estrela correta ascender, o portal se abrirá e Ele virá!",
+        "efeito": "san:-2",
+        "escolhas": [
+          {"texto": "Que portal? Onde fica?",         "proximo": "n_camara"},
+          {"texto": "Vocês estão completamente loucos!", "proximo": null}
+        ]
+      },
+      "n_edgar": {
+        "id": "n_edgar",
+        "personagem_id": "cultista_altar",
+        "texto": "O rapaz? Ele viu coisas que não devia. O Mestre cuida dEle agora. Sua mente pertence a Ele.",
+        "efeito": "flag:sabe_edgar",
+        "escolhas": [
+          {"texto": "Vou encontrá-lo de qualquer forma.", "proximo": null}
+        ]
+      },
+      "n_camara": {
+        "id": "n_camara",
+        "personagem_id": "cultista_altar",
+        "texto": "O altar fica mais fundo... na Câmara Velha sob o casarão. Mas você jamais chegará lá. Pegue-o!",
+        "efeito": "flag:sabe_camara",
+        "escolhas": []
+      }
+    }
+  }
+}

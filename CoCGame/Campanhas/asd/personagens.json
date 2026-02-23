@@ -1,0 +1,24 @@
+{
+  "jogador": {
+    "id": "jogador",
+    "nome": "Investigador",
+    "tipo": "investigador",
+    "sprite_id": 0,
+    "ia": "nenhuma",
+    "stats": {
+      "hp": 10,
+      "san": 50,
+      "forca": 50,
+      "destreza": 50,
+      "inteligencia": 50,
+      "constituicao": 50,
+      "educacao": 50,
+      "aparencia": 50,
+      "poder": 50
+    },
+    "inventario": [],
+    "background": "",
+    "spawn_col": 2.0,
+    "spawn_linha": 2.0
+  }
+}

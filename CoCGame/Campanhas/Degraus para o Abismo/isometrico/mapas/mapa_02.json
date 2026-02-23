@@ -1,0 +1,52 @@
+{
+  "id": "mapa_02",
+  "nome": "Câmara do Altar",
+  "largura": 14,
+  "altura": 12,
+  "tiles": [
+    [2,2,2,2,2,2,2,2,2,2,2,2,2,2],
+    [2,1,1,1,1,1,1,1,1,1,1,1,1,2],
+    [2,1,2,1,1,1,1,1,1,1,1,2,1,2],
+    [2,1,1,1,1,1,3,3,1,1,1,1,1,2],
+    [2,1,1,1,1,3,1,1,3,1,1,1,1,2],
+    [2,1,1,1,3,1,1,1,1,3,1,1,1,2],
+    [2,1,2,1,1,1,1,1,1,1,1,2,1,2],
+    [2,1,1,1,3,1,1,1,1,3,1,1,1,2],
+    [2,1,1,1,1,3,1,1,3,1,1,1,1,2],
+    [2,1,1,1,1,1,3,3,1,1,1,1,1,2],
+    [2,1,2,1,1,1,1,1,1,1,1,2,1,2],
+    [2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+  ],
+  "efeitos": [
+    {"col": 6, "linha": 5, "tipo": "SANGUE", "duracao": 99},
+    {"col": 7, "linha": 5, "tipo": "SANGUE", "duracao": 99},
+    {"col": 6, "linha": 6, "tipo": "SANGUE", "duracao": 99},
+    {"col": 7, "linha": 6, "tipo": "SANGUE", "duracao": 99},
+    {"col": 9, "linha": 5, "tipo": "NEVOA",  "duracao": 99},
+    {"col":10, "linha": 5, "tipo": "NEVOA",  "duracao": 99},
+    {"col":10, "linha": 6, "tipo": "NEVOA",  "duracao": 99},
+    {"col":10, "linha": 7, "tipo": "NEVOA",  "duracao": 99},
+    {"col": 9, "linha": 6, "tipo": "NEVOA",  "duracao": 99}
+  ],
+  "objetos": [],
+  "triggers": [
+    {
+      "id": "area_altar_sangue",
+      "tipo": "zona",
+      "area": [[5,5],[6,5],[7,5],[8,5],[5,6],[6,6],[7,6],[8,6]],
+      "condicao": "sempre",
+      "acao": "san:-3",
+      "params": {}
+    },
+    {
+      "id": "aproximar_cultista",
+      "tipo": "zona",
+      "area": [[5,3],[6,3],[7,3],[8,3],[5,4],[6,4],[7,4],[8,4]],
+      "condicao": "sempre",
+      "acao": "dialogo:d_cultista_01",
+      "params": {}
+    }
+  ],
+  "conexoes": [],
+  "personagens_spawn": ["cultista_altar", "engendro_valverde"]
+}

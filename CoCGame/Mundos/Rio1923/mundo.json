@@ -1,0 +1,26 @@
+{
+  "id": "Rio1923",
+  "nome": "Rio de Janeiro, 1923",
+  "campanha": "Degraus para o Abismo",
+  "largura": 8,
+  "altura": 6,
+  "chunk_w": 20,
+  "chunk_h": 15,
+  "tile_w": 32,
+  "tile_h": 32,
+  "fps": 60,
+  "vel_normal": 128,
+  "vel_corrida": 240,
+  "spawn_chunk": [1, 1],
+  "spawn_tile": [10, 7],
+  "tileset": "Campanhas/Degraus para o Abismo/tiles_rio1923.py",
+  "chunks_modulo": "Campanhas/Degraus para o Abismo/chunks_rio1923.py",
+  "bairros": {
+    "1,1": "Casa do Investigador",
+    "2,2": "Faculdade Malheiros",
+    "2,3": "Bairro do Catumbi",
+    "3,3": "Casarão da Rua das Almas",
+    "3,4": "Câmara Subterrânea",
+    "6,4": "Centro — Prefeitura"
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "campanha": "Degraus para o Abismo",
+  "data_inicio": "22 de junho de 1923",
+  "spawn": {"chunk": [2, 3], "tile": [10, 7]},
+
+  "npcs": {
+    "malheiros": {
+      "chunk": [4, 2], "tile": [10, 5],
+      "nome": "Prof. Malheiros",
+      "cor": [212, 168, 67]
+    },
+    "benedito": {
+      "chunk": [2, 3], "tile": [8, 10],
+      "nome": "Seu Benedito",
+      "cor": [138, 108, 78]
+    },
+    "cecilia": {
+      "chunk": [2, 3], "tile": [5, 5],
+      "nome": "Dona Cecilia",
+      "cor": [168, 128, 188]
+    },
+    "guia": {
+      "chunk": [3, 3], "tile": [10, 8],
+      "nome": "O Guia",
+      "cor": [178, 48, 48]
+    }
+  },
+
+  "locais_especiais": {
+    "botequim":   {"chunk": [2, 3], "tile": [8, 10], "descricao": "Botequim do Seu Benedito"},
+    "faculdade":  {"chunk": [4, 2], "tile": [10, 5], "descricao": "Faculdade de Arqueologia"},
+    "prefeitura": {"chunk": [3, 2], "tile": [12, 7], "descricao": "Prefeitura — Arquivo Historico"},
+    "casarao":    {"chunk": [3, 3], "tile": [10, 8], "descricao": "Casarao da Rua das Almas"},
+    "escadaria":  {"chunk": [3, 3], "tile": [10, 10], "descricao": "Escadaria Subterranea — Camara de Valverde"}
+  },
+
+  "eventos": [
+    {
+      "id": "chegada_catumbi",
+      "descricao": "Chegada ao Catumbi",
+      "npc_id": null,
+      "chunk": [2, 3], "tile": [10, 7], "raio": 12,
+      "passagem": "bairro_catumbi",
+      "condicao_var": null, "condicao_val": null,
+      "hora_min": null, "hora_max": null,
+      "unico": true, "tipo": "cena"
+    },
+    {
+      "id": "botequim_benedito",
+      "descricao": "Botequim do Seu Benedito",
+      "npc_id": "benedito",
+      "chunk": [2, 3], "tile": [8, 10], "raio": 2,
+      "passagem": "botequim_benedito",
+      "condicao_var": null, "condicao_val": null,
+      "hora_min": null, "hora_max": null,
+      "unico": false, "tipo": "dialogo"
+    },
+    {
+      "id": "escritorio_malheiros",
+      "descricao": "Faculdade de Arqueologia — Sala de Malheiros",
+      "npc_id": "malheiros",
+      "chunk": [4, 2], "tile": [10, 5], "raio": 2,
+      "passagem": "escritorio_malheiros",
+      "condicao_var": null, "condicao_val": null,
+      "hora_min": null, "hora_max": null,
+      "unico": true, "tipo": "cena"
+    },
+    {
+      "id": "pesquisa_prefeitura",
+      "descricao": "Arquivo Historico — Prefeitura",
+      "npc_id": null,
+      "chunk": [3, 2], "tile": [12, 7], "raio": 2,
+      "passagem": "pesquisa_prefeitura",
+      "condicao_var": null, "condicao_val": null,
+      "hora_min": null, "hora_max": null,
+      "unico": true, "tipo": "dialogo"
+    },
+    {
+      "id": "casarao_dia",
+      "descricao": "Casarao da Rua das Almas (dia)",
+      "npc_id": null,
+      "chunk": [3, 3], "tile": [10, 8], "raio": 2,
+      "passagem": "casarao_dia",
+      "condicao_var": null, "condicao_val": null,
+      "hora_min": 6, "hora_max": 20,
+      "unico": true, "tipo": "cena"
+    },
+    {
+      "id": "casarao_noite",
+      "descricao": "Casarao da Rua das Almas (noite)",
+      "npc_id": null,
+      "chunk": [3, 3], "tile": [10, 8], "raio": 2,
+      "passagem": "noite_casarao",
+      "condicao_var": "conhece_plano", "condicao_val": true,
+      "hora_min": 20, "hora_max": 6,
+      "unico": false, "tipo": "cena"
+    },
+    {
+      "id": "confronto_retorno",
+      "descricao": "Confronto com Malheiros",
+      "npc_id": "malheiros",
+      "chunk": [4, 2], "tile": [10, 5], "raio": 2,
+      "passagem": "confronto_malheiros",
+      "condicao_var": "encontrou_retratos", "condicao_val": true,
+      "hora_min": null, "hora_max": null,
+      "unico": true, "tipo": "cena"
+    },
+    {
+      "id": "encontro_guia",
+      "descricao": "O Guia — a Camara de Valverde",
+      "npc_id": "guia",
+      "chunk": [3, 3], "tile": [10, 10], "raio": 3,
+      "passagem": "camara_valverde",
+      "condicao_var": "pesquisou_valverde", "condicao_val": true,
+      "hora_min": null, "hora_max": null,
+      "unico": false, "tipo": "cena"
+    }
+  ]
+}

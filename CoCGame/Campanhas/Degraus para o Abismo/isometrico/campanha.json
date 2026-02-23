@@ -1,0 +1,10 @@
+{
+  "versao_schema": "1.0",
+  "nome": "Degraus para o Abismo",
+  "versao": "1.0",
+  "autor": "Luciano Giehl (adaptação isométrica)",
+  "descricao": "Rio de Janeiro, junho de 1926. Uma série de desaparecimentos leva os investigadores ao casarão da Rua das Almas — e a algo muito mais antigo.",
+  "mapa_inicial": "mapa_01",
+  "personagem_jogador_id": "jogador",
+  "mapas_ids": ["mapa_01", "mapa_02"]
+}

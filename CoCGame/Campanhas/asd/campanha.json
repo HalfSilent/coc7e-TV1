@@ -1,0 +1,12 @@
+{
+  "versao_schema": "1.0",
+  "nome": "asd",
+  "versao": "1.0",
+  "autor": "",
+  "descricao": "",
+  "mapa_inicial": "mapa_01",
+  "personagem_jogador_id": "jogador",
+  "mapas_ids": [
+    "mapa_01"
+  ]
+}
