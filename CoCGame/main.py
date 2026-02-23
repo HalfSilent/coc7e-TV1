@@ -259,16 +259,22 @@ def main():
     _cena_titulo(tela, clock)
     _cena_negro(tela, clock, 200)
 
+    # ── Áudio ─────────────────────────────────────────────────
+    from engine.audio_manager import audio
+
     # ── Game loop ─────────────────────────────────────────────
     from ui.menu_pygame import MenuPrincipal
 
     while True:
+        audio.play_music("menu")   # toca Hellraiser; sem-op se já tocando
         acao = MenuPrincipal(tela, clock).run()
 
         if acao == "sair":
+            audio.stop_music(fade_ms=800)
             break
 
         elif acao == "novo_jogo":
+            audio.stop_music()
             from ui.tela_criar_personagem import TelaCriarPersonagem
             from ui.tela_selecionar_local import TelaSelecionarLocal
             jogador = TelaCriarPersonagem(tela, clock).run()
@@ -280,12 +286,14 @@ def main():
                 _iniciar_mundo(tela, jogador)
 
         elif acao == "continuar":
+            audio.stop_music()
             jogador, _ = _carregar_jogador()
             if jogador:
                 _iniciar_mundo(tela, jogador)
 
         elif acao == "masmorra":
             # Acesso rápido — garante que existe ficha
+            audio.stop_music()
             jogador, _ = _carregar_jogador()
             if not jogador:
                 from ui.tela_criar_personagem import TelaCriarPersonagem
@@ -295,6 +303,7 @@ def main():
                 TelaMasmorra(tela, jogador).run()
 
         elif acao == "combate":
+            audio.stop_music()
             jogador, pericias = _carregar_jogador()
             if jogador:
                 from engine.entidade import Inimigo

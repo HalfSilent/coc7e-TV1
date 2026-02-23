@@ -23,6 +23,11 @@ if _RAIZ not in sys.path:
 
 import gerenciador_assets as _ga
 
+try:
+    from engine.audio_manager import audio as _audio
+except Exception:
+    _audio = None  # type: ignore
+
 # ── constantes visuais ─────────────────────────────────────────
 LARGURA, ALTURA = 1280, 720
 
@@ -212,6 +217,7 @@ class MenuPrincipal:
 
     def run(self) -> str:
         """Executa o menu e retorna a ação escolhida como string."""
+        _hover_anterior: int = -1   # rastreia hover para sfx de rollover
         _MAPA_TECLAS = {
             pygame.K_j:      "jogar",   # mapeado abaixo
             pygame.K_m:      "masmorra",
@@ -236,13 +242,16 @@ class MenuPrincipal:
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     for rect, botao in rects:
                         if rect.collidepoint(mouse_pos):
+                            if _audio: _audio.play_sfx("menu_select")
                             return botao["acao"]
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_j:
+                        if _audio: _audio.play_sfx("menu_select")
                         return acao_j
                     acao = _MAPA_TECLAS.get(event.key)
                     if acao:
+                        if _audio: _audio.play_sfx("menu_select")
                         return acao
 
             # ── desenho ──
@@ -250,6 +259,15 @@ class MenuPrincipal:
             self._draw_particulas(t)
             self._draw_titulo(t)
             self._draw_separadores()
+
+            # rollover SFX
+            hover_idx = next(
+                (i for i, (r, _) in enumerate(rects) if r.collidepoint(mouse_pos)), -1
+            )
+            if hover_idx != _hover_anterior:
+                if hover_idx >= 0 and _audio:
+                    _audio.play_sfx("menu_open", volume=0.4)
+                _hover_anterior = hover_idx
 
             for rect, botao in rects:
                 self._draw_botao(rect, botao, rect.collidepoint(mouse_pos))

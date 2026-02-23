@@ -112,7 +112,7 @@ class AudioManager:
             som.play()
 
     def _carregar_sfx(self, nome: str) -> Optional[pygame.mixer.Sound]:
-        for ext in (".wav", ".ogg", ".mp3"):
+        for ext in (".wav", ".ogg", ".mp3", ".flac"):
             path = os.path.join(SFX_DIR, nome + ext)
             if os.path.exists(path):
                 try:
