@@ -33,8 +33,10 @@ from engine.mundo import Mundo, TipoTile, EfeitoAmbiental
 from engine.entidade import Entidade, Jogador, Inimigo, Engendro
 from engine.grid.tiles import TileLoader
 from engine.grid.objeto import ObjetoMasmorra, OpcaoMenu
+from engine.inventario_itens import criar_item
 from combate.tela_combate import TelaCombate
 from dialogo.tela_dialogo import TelaDialogo
+from ui.tela_inventario import TelaInventario
 from gerenciador_assets import get_font, garantir_fontes
 
 
@@ -165,10 +167,6 @@ class TelaMasmorra:
         self.resultado = "em_jogo"
         self.destino_saida = ""
 
-        # Arma/itens do jogador (para passar ao combate)
-        self.arma_equipada = ""
-        self.itens_inv: List[str] = []
-
     # ── Helpers de inicialização ──────────────────────────────
 
     def _mundo_do_mapa(self, mapa_raw: List[List[int]]) -> Mundo:
@@ -267,6 +265,8 @@ class TelaMasmorra:
                 self._mover_jogador(1, 0)
             elif event.key == pygame.K_e:
                 self._interagir()
+            elif event.key == pygame.K_i:
+                self._abrir_inventario()
             elif event.key == pygame.K_ESCAPE:
                 self.resultado = "voltou_mundo"
             elif event.key == pygame.K_TAB:
@@ -403,8 +403,8 @@ class TelaMasmorra:
             jogador=self.jogador,
             inimigos=inimigos_proximos,
             mundo=self.mundo,         # mesmo mapa de exploração
-            arma_equipada=self.arma_equipada,
-            itens_inv=self.itens_inv,
+            arma_equipada=self.jogador.arma_equipada,
+            itens_inv=self.jogador.itens_inv,
             pericias=getattr(self.jogador, "pericias", {}),
             manter_posicoes=True,     # preserva posições reais das entidades
         ).run()
@@ -437,14 +437,29 @@ class TelaMasmorra:
                 return
         self._msg("Nada por aqui...")
 
-    def _conceder_item(self, item: str):
-        """Adiciona item ao inventário e equipa arma se for uma."""
-        self.itens_inv.append(item)
-        armas = ("revolver", "espingarda", "rifle", "faca",
-                 "cacete", "facada", "estilete")
-        if item in armas and not self.arma_equipada:
-            self.arma_equipada = item
-        self._msg(f"+ {item} adicionado ao inventário")
+    def _conceder_item(self, item_id: str):
+        """
+        Adiciona item ao inventário do jogador via catálogo.
+        Aceita tanto item_ids do catálogo quanto strings legadas.
+        """
+        item = criar_item(item_id)
+        if item:
+            ok, msg = self.jogador.inventario.adicionar(item)
+            self._msg(msg)
+            # Auto-equipa primeira arma encontrada
+            if item.id in [i.id for i in self.jogador.inventario.armas()]:
+                if not self.jogador.inventario.arma_equipada:
+                    self.jogador.inventario.equipar(item.id)
+        else:
+            # Legado: string que não está no catálogo
+            self._msg(f"+ {item_id} (item não catalogado)")
+
+    def _abrir_inventario(self):
+        """Abre o overlay de inventário pausando a exploração."""
+        self._desenhar_cena()   # garante fundo atualizado
+        resultado = TelaInventario(self.screen, self.jogador).run()
+        # Reconstrói o fundo limpo após fechar
+        self._renderizar()
 
     # ══════════════════════════════════════════════════════════
     # MENU DE INTERAÇÃO [E]
@@ -832,7 +847,7 @@ class TelaMasmorra:
 
         # Dicas
         dica = self.f_normal.render(
-            "[WASD] Mover  [E] Interagir  [ESC] Voltar",
+            "[WASD] Mover  [E] Interagir  [I] Inventário  [ESC] Voltar",
             True, (80, 80, 100)
         )
         _, sh = self.screen.get_size()

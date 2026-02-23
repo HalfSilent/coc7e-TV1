@@ -10,9 +10,11 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Optional
+from typing import List, Optional
 
 import pygame
+
+from engine.inventario import Inventario
 
 
 # ══════════════════════════════════════════════════════════════
@@ -140,6 +142,7 @@ class Jogador(Entidade):
                  destreza: int = 65, constituicao: int = 60,
                  skin_id: int = 0,
                  pericias: Optional[dict] = None,
+                 dinheiro: float = 0.0,
                  **kwargs):
         super().__init__(
             nome=nome, col=col, linha=linha,
@@ -150,6 +153,27 @@ class Jogador(Entidade):
         self.skin_id = skin_id
         # Dicionário de perícias carregado da ficha (nome → valor total)
         self.pericias: dict = pericias if pericias is not None else {}
+        # Inventário do investigador
+        self.inventario: Inventario = Inventario(forca=forca)
+        self.inventario.dinheiro = dinheiro
+
+    # ── Propriedades de compat. legada ─────────────────────────────────
+    @property
+    def arma_equipada(self) -> str:
+        """Legado: retorna ID da arma equipada como string."""
+        return self.inventario.arma_id
+
+    @property
+    def itens_inv(self) -> List[str]:
+        """Legado: retorna lista de IDs dos itens no inventário."""
+        return [i.id for i in self.inventario.itens]
+
+    @property
+    def pistas(self) -> List[str]:
+        """Legado: retorna descrições das pistas como strings."""
+        from engine.inventario import TipoItem
+        return [i.descricao for i in self.inventario.itens
+                if i.tipo == TipoItem.PISTA]
 
 
 # ══════════════════════════════════════════════════════════════
