@@ -4,7 +4,7 @@ ui/menu_pygame.py — Menu principal do jogo.
 Expõe a classe MenuPrincipal que o main.py instancia e chama .run().
 .run() retorna uma das strings:
     "novo_jogo" | "continuar" | "masmorra" | "combate"
-  | "criador_legado" | "sair"
+  | "editor" | "criador_legado" | "sair"
 """
 from __future__ import annotations
 
@@ -127,6 +127,11 @@ class MenuPrincipal:
                 "desc": "Recomeçar — criar novo investigador",
             })
         lista.append({
+            "texto": "[E]  Editor de Mapas", "cor": (30, 55, 70),
+            "acao": "editor",
+            "desc": "Editor visual de mapas · pincel · flood fill · inimigos · objetos",
+        })
+        lista.append({
             "texto": "[F]  Criador Legado (DearPyGui)", "cor": COR_DESTAQUE,
             "acao": "criador_legado",
             "desc": "Ficha completa via editor externo",
@@ -222,6 +227,7 @@ class MenuPrincipal:
             pygame.K_j:      "jogar",   # mapeado abaixo
             pygame.K_m:      "masmorra",
             pygame.K_c:      "combate",
+            pygame.K_e:      "editor",
             pygame.K_f:      "criador_legado",
             pygame.K_n:      "novo_jogo",
             pygame.K_ESCAPE: "sair",

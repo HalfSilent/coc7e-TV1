@@ -317,6 +317,11 @@ def main():
                     pericias=pericias,
                 ).run()
 
+        elif acao == "editor":
+            audio.stop_music()
+            from editor.editor_mapa import EditorMapa
+            EditorMapa(tela, clock).run()
+
         elif acao == "criador_legado":
             # DearPyGui standalone — mantido para Campanhas/
             import subprocess
