@@ -397,16 +397,16 @@ class TelaMasmorra:
         self._renderizar()
         pygame.time.wait(400)
 
-        mundo_combate = self._criar_mundo_combate(inimigos_proximos)
-
+        # CoC 7e: combate acontece no mesmo espaço — sem teleporte para arena separada
         resultado = TelaCombate(
             screen=self.screen,
             jogador=self.jogador,
             inimigos=inimigos_proximos,
-            mundo=mundo_combate,
+            mundo=self.mundo,         # mesmo mapa de exploração
             arma_equipada=self.arma_equipada,
             itens_inv=self.itens_inv,
             pericias=getattr(self.jogador, "pericias", {}),
+            manter_posicoes=True,     # preserva posições reais das entidades
         ).run()
 
         # Remove inimigos derrotados
@@ -416,62 +416,9 @@ class TelaMasmorra:
             self.resultado = "derrota"
             return
 
-        # Reposiciona jogador após combate
-        self._posicionar_jogador_pos_combate()
+        # Jogador permanece onde estava — sem reposicionamento
+        self._atualizar_visibilidade()
         self._msg(f"Combate encerrado: {resultado}")
-
-    def _criar_mundo_combate(self, inimigos: List[Entidade]) -> Mundo:
-        """
-        Extrai uma subárea do mapa ao redor do jogador para usar no combate.
-        Se o mapa for pequeno o suficiente, usa ele completo.
-        """
-        jc, jl = int(self.jogador.col), int(self.jogador.linha)
-        raio = 6  # tiles de raio para o grid de combate
-
-        c_min = max(0, jc - raio)
-        l_min = max(0, jl - raio)
-        c_max = min(self.mundo.colunas - 1, jc + raio)
-        l_max = min(self.mundo.linhas - 1, jl + raio)
-
-        # Extrai subgrid
-        subgrid = []
-        for l in range(l_min, l_max + 1):
-            row = []
-            for c in range(c_min, c_max + 1):
-                cel = self.mundo.celula(c, l)
-                row.append(cel.tipo.value if cel else 2)
-            subgrid.append(row)
-
-        mundo_combate = Mundo(subgrid)
-
-        # Copia efeitos ambientais
-        for l in range(l_min, l_max + 1):
-            for c in range(c_min, c_max + 1):
-                cel_orig = self.mundo.celula(c, l)
-                cel_dest = mundo_combate.celula(c - c_min, l - l_min)
-                if cel_orig and cel_dest and cel_orig.efeito.name != "NENHUM":
-                    cel_dest.aplicar_efeito(cel_orig.efeito, cel_orig.duracao_efeito)
-
-        # Ajusta posições das entidades para o subgrid
-        self.jogador.col   -= c_min
-        self.jogador.linha -= l_min
-        for ent in inimigos:
-            ent.col   -= c_min
-            ent.linha -= l_min
-
-        return mundo_combate
-
-    def _posicionar_jogador_pos_combate(self):
-        """Reposiciona jogador em célula válida após combate."""
-        for l in range(self.mundo.linhas):
-            for c in range(self.mundo.colunas):
-                cel = self.mundo.celula(c, l)
-                if cel and cel.passavel:
-                    self.jogador.col   = c
-                    self.jogador.linha = l
-                    cel.ocupante = self.jogador
-                    self._atualizar_visibilidade()
-                    return
 
     def _interagir(self):
         """Interage com objeto adjacente ou na mesma célula."""
@@ -529,8 +476,8 @@ class TelaMasmorra:
         fase = "escolha"   # "escolha" | "resultado"
 
         while True:
-            # Renderiza o jogo ao fundo
-            self._renderizar()
+            # Renderiza o jogo ao fundo (sem flip — o flip ocorre ao final do loop)
+            self._desenhar_cena()
 
             # Overlay semitransparente
             ov = pygame.Surface((w, h), pygame.SRCALPHA)
@@ -689,7 +636,8 @@ class TelaMasmorra:
     # RENDERIZAÇÃO
     # ══════════════════════════════════════════════════════════
 
-    def _renderizar(self):
+    def _desenhar_cena(self):
+        """Renderiza tudo na tela SEM chamar display.flip() — usado por submenus/popups."""
         self.screen.fill(COR_BG)
         self._desenhar_mapa()
         self._desenhar_objetos()
@@ -699,6 +647,9 @@ class TelaMasmorra:
         self._desenhar_hud()
         self._desenhar_minimap()
         self._desenhar_mensagens()
+
+    def _renderizar(self):
+        self._desenhar_cena()
         pygame.display.flip()
 
     def _px(self, col: int, linha: int) -> Tuple[int, int]:

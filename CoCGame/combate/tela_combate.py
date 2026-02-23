@@ -89,6 +89,7 @@ class TelaCombate:
         arma_equipada: str = "",
         itens_inv:     Optional[List[str]] = None,
         pericias:      Optional[dict] = None,
+        manter_posicoes: bool = False,
     ):
         self.screen  = screen
         self.jogador = jogador
@@ -101,8 +102,15 @@ class TelaCombate:
         else:
             self.mundo = Mundo(MAPA_PADRÃO)
 
+        # Câmera (para mapas maiores que a área de grid)
+        self.cam_x = 0
+        self.cam_y = 0
+
         # Posiciona jogador e inimigos no grid
-        self._posicionar_entidades()
+        if manter_posicoes:
+            self._marcar_ocupantes()   # mantém posições reais do mapa de exploração
+        else:
+            self._posicionar_entidades()
 
         # Log — deve ser inicializado ANTES do gerenciador disparar eventos
         self.log_combate: List[str] = []
@@ -188,6 +196,24 @@ class TelaCombate:
                 cel = self.mundo.celula(c, l)
                 if cel:
                     cel.ocupante = ent
+
+    def _marcar_ocupantes(self):
+        """Registra ocupantes nas células sem mover entidades (combate no mapa de exploração)."""
+        cel = self.mundo.celula(int(self.jogador.col), int(self.jogador.linha))
+        if cel:
+            cel.ocupante = self.jogador
+        for ent in self.inimigos:
+            cel = self.mundo.celula(int(ent.col), int(ent.linha))
+            if cel:
+                cel.ocupante = ent
+
+    def _atualizar_camera(self):
+        """Câmera centraliza no jogador — necessário para mapas maiores que a área de grid."""
+        grid_w = self.area_grid.width
+        grid_h = self.area_grid.height
+        self.cam_x = int(self.jogador.col) * CELL_SIZE - grid_w // 2 + CELL_SIZE // 2
+        self.cam_y = int(self.jogador.linha) * CELL_SIZE - grid_h // 2 + CELL_SIZE // 2
+        self.renderer.set_camera(self.cam_x, self.cam_y)
 
     # ══════════════════════════════════════════════════════════
     # LOOP PRINCIPAL
@@ -633,6 +659,7 @@ class TelaCombate:
     # ══════════════════════════════════════════════════════════
 
     def _renderizar(self):
+        self._atualizar_camera()
         self.screen.fill((10, 10, 15))
 
         # Clip na área do grid

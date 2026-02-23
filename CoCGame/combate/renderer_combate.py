@@ -99,21 +99,28 @@ class RendererCombate:
         self.font     = font_hud
         self.offset_x = offset_x
         self.offset_y = offset_y
+        self.cam_x    = 0   # câmera para scroll em mapas grandes
+        self.cam_y    = 0
+
+    def set_camera(self, cam_x: int, cam_y: int):
+        """Atualiza o offset da câmera (para mapas maiores que a tela de combate)."""
+        self.cam_x = cam_x
+        self.cam_y = cam_y
 
     # ── conversões de coordenadas ──────────────────────────────
 
     def grid_para_pixel(self, col: int, linha: int) -> Tuple[int, int]:
         """Retorna o pixel (x, y) do canto superior-esquerdo da célula."""
         return (
-            self.offset_x + col * CELL_SIZE,
-            self.offset_y + linha * CELL_SIZE,
+            self.offset_x + col * CELL_SIZE - self.cam_x,
+            self.offset_y + linha * CELL_SIZE - self.cam_y,
         )
 
     def pixel_para_grid(self, px: int, py: int) -> Tuple[int, int]:
         """Converte posição do mouse para célula do grid."""
         return (
-            (px - self.offset_x) // CELL_SIZE,
-            (py - self.offset_y) // CELL_SIZE,
+            (px - self.offset_x + self.cam_x) // CELL_SIZE,
+            (py - self.offset_y + self.cam_y) // CELL_SIZE,
         )
 
     # ── tamanho da área de combate em pixels ──────────────────
@@ -167,11 +174,14 @@ class RendererCombate:
     # ── tiles ─────────────────────────────────────────────────
 
     def _desenhar_tiles(self, mundo: Mundo):
+        sw, sh = self.screen.get_size()
         for linha in range(mundo.linhas):
             for col in range(mundo.colunas):
+                x, y = self.grid_para_pixel(col, linha)
+                if x + CELL_SIZE < 0 or x > sw or y + CELL_SIZE < 0 or y > sh:
+                    continue  # fora da tela
                 cel = mundo.grid[linha][col]
                 cor = self._cor_tile(cel)
-                x, y = self.grid_para_pixel(col, linha)
                 r = pygame.Rect(x, y, CELL_SIZE, CELL_SIZE)
                 pygame.draw.rect(self.screen, cor, r)
                 pygame.draw.rect(self.screen, COR_BORDA_TILE, r, 1)
@@ -194,6 +204,7 @@ class RendererCombate:
 
     def _desenhar_efeitos(self, mundo: Mundo):
         overlay = pygame.Surface((CELL_SIZE, CELL_SIZE), pygame.SRCALPHA)
+        sw, sh = self.screen.get_size()
         for linha in range(mundo.linhas):
             for col in range(mundo.colunas):
                 cel = mundo.grid[linha][col]
@@ -202,8 +213,10 @@ class RendererCombate:
                 cor_rgba = EFEITO_CORES.get(cel.efeito)
                 if not cor_rgba:
                     continue
-                overlay.fill(cor_rgba)
                 x, y = self.grid_para_pixel(col, linha)
+                if x + CELL_SIZE < 0 or x > sw or y + CELL_SIZE < 0 or y > sh:
+                    continue
+                overlay.fill(cor_rgba)
                 self.screen.blit(overlay, (x, y))
 
                 # Ícone de efeito (texto pequeno)
