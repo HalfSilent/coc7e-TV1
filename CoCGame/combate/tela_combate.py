@@ -17,9 +17,14 @@ Controles:
     Mouse sobre grid   → cursor de seleção
     [1–9]             → seleciona carta/ação
     Click no grid     → confirma alvo ou movimento
+    [M]               → mover (ativa cursor de movimento)
     [ESC]             → cancela ação em andamento
     [F]               → fuga (testa Esquivar)
-    [ENTER]           → passa o turno (Esperar)
+    [ENTER]           → passa o turno
+    --- Popup de Reação (quando inimigo ataca) ---
+    [E]               → Esquivar
+    [C]               → Contra-atacar
+    [N]               → Absorver (não resistir)
 """
 from __future__ import annotations
 
@@ -32,7 +37,7 @@ import pygame
 from engine.mundo import Mundo, TipoTile, EfeitoAmbiental
 from engine.entidade import Entidade, Jogador, Inimigo, Engendro
 from engine.combate.gerenciador import (
-    GerenciadorCombate, EstadoCombate, TipoAcao, Acao, ACOES_PADRAO
+    GerenciadorCombate, EstadoCombate, TipoAcao, TipoReacao, Acao, ACOES_PADRAO
 )
 from combate.renderer_combate import RendererCombate, CELL_SIZE
 from combate.cards import Card, montar_deck_investigador, rolar_dado, efeito_chao_para_enum
@@ -102,10 +107,11 @@ class TelaCombate:
         # Log — deve ser inicializado ANTES do gerenciador disparar eventos
         self.log_combate: List[str] = []
 
-        # Gerenciador de combate
+        # Gerenciador de combate — passa o callback de reação
         self.gerenciador = GerenciadorCombate(
             self.mundo,
-            on_log=self._adicionar_log
+            on_log=self._adicionar_log,
+            on_pedir_reacao=self._on_pedir_reacao_callback,
         )
         self.gerenciador.iniciar_combate(self.jogador, self.inimigos)
 
@@ -204,10 +210,9 @@ class TelaCombate:
                 self._tela_resultado(resultado)
                 return resultado
 
-            # Turno de inimigo: gerenciador resolve automaticamente
-            # (já feito dentro de proximo_turno())
-
             self._renderizar()
+
+            # Popup de reação sobrepõe o grid (renderizado dentro de _renderizar)
 
     # ══════════════════════════════════════════════════════════
     # EVENTOS
@@ -217,7 +222,11 @@ class TelaCombate:
         estado = self.gerenciador.estado
 
         if event.type == pygame.KEYDOWN:
-            self._teclado(event.key, estado)
+            # Popup de reação tem prioridade máxima
+            if estado == EstadoCombate.AGUARDANDO_REACAO:
+                self._teclado_reacao(event.key)
+            else:
+                self._teclado(event.key, estado)
 
         elif event.type == pygame.MOUSEMOTION:
             mx, my = event.pos
@@ -232,26 +241,45 @@ class TelaCombate:
                 col, linha = self.renderer.pixel_para_grid(mx, my)
                 self._click_grid(col, linha)
 
+    def _teclado_reacao(self, key: int):
+        """Processa teclas durante o popup de reação."""
+        if key == pygame.K_e:
+            self._adicionar_log("Escolheu: Esquivar")
+            self.gerenciador.resolver_reacao(TipoReacao.ESQUIVAR)
+        elif key == pygame.K_c:
+            self._adicionar_log("Escolheu: Contra-atacar")
+            self.gerenciador.resolver_reacao(TipoReacao.CONTRA_ATACAR)
+        elif key == pygame.K_n:
+            self._adicionar_log("Escolheu: Absorver (sem resistencia)")
+            self.gerenciador.resolver_reacao(TipoReacao.ABSORVER)
+
     def _teclado(self, key: int, estado: EstadoCombate):
         if key == pygame.K_ESCAPE:
-            if estado == EstadoCombate.ESCOLHENDO_ALVO:
+            if estado in (EstadoCombate.ESCOLHENDO_ALVO,
+                          EstadoCombate.ESCOLHENDO_MOVIMENTO):
                 self.gerenciador.cancelar_acao()
                 self._limpar_highlights()
                 self.card_selecionado = None
 
         elif key == pygame.K_RETURN or key == pygame.K_KP_ENTER:
-            # Esperar (passa turno)
+            # Passa o turno
             if estado == EstadoCombate.TURNO_JOGADOR:
-                esperar = Acao(TipoAcao.ESPERAR, custo_ap=0, alcance=0, descricao="Esperar")
-                self.gerenciador.selecionar_acao(esperar)
+                self._adicionar_log("Passou o turno.")
+                self.gerenciador.passar_turno()
                 self._limpar_highlights()
+
+        elif key == pygame.K_m:
+            # Ativa cursor de movimento
+            if estado == EstadoCombate.TURNO_JOGADOR:
+                self.gerenciador.iniciar_movimento()
+                self.celulas_movimento = set(self.gerenciador.celulas_highlight)
 
         elif key == pygame.K_f:
             # Tentativa de fuga
             if estado == EstadoCombate.TURNO_JOGADOR:
                 self._tentar_fuga()
 
-        # Scroll da lista de cartas no HUD [↑ ↓ / PgUp PgDn]
+        # Scroll da lista de cartas no HUD [PgUp PgDn]
         elif key in (pygame.K_UP, pygame.K_PAGEUP):
             self.deck_scroll = max(0, self.deck_scroll - 1)
 
@@ -274,21 +302,32 @@ class TelaCombate:
         self._limpar_highlights()
 
         p = self.gerenciador.participante_ativo
-        if not p or p.ap_atual < card.custo_ap:
-            self._adicionar_log(f"AP insuficiente para {card.nome}!")
+        if not p:
+            return
+
+        # Verifica se ja usou a acao principal para cards de ataque
+        if card.tipo == "ataque" and p.ja_agiu:
+            self._adicionar_log(f"Acao principal ja usada! ({card.nome})")
             return
 
         # Cards de movimento
         if card.tipo == "movimento":
-            passos = card.efeito.get("passos", 3)
+            passos = card.efeito.get("passos", p.mov_restante)
+            passos = min(passos, p.mov_restante)
+            if passos <= 0:
+                self._adicionar_log("Sem movimento restante!")
+                return
             ent = self.jogador
             celulas = self.mundo.celulas_em_alcance(
                 int(ent.col), int(ent.linha), passos, so_passaveis=True
             )
             self.celulas_movimento = {(c, l) for c, l in celulas}
-            # Prepara ação de mover no gerenciador
-            acao = Acao(TipoAcao.MOVER, custo_ap=card.custo_ap, alcance=passos)
-            self.gerenciador.selecionar_acao(acao)
+            # Prepara acao de mover no gerenciador
+            acao = Acao(TipoAcao.MOVER, custo_ap=0, alcance=passos)
+            self.gerenciador.acao_selecionada  = acao
+            self.gerenciador.celulas_highlight = list(celulas)
+            self.gerenciador.estado = EstadoCombate.ESCOLHENDO_MOVIMENTO
+            self._adicionar_log(f"{card.nome}: escolha o destino (ate {passos} tiles)")
 
         # Cards de ataque
         elif card.tipo == "ataque":
@@ -298,9 +337,10 @@ class TelaCombate:
             )
             self.celulas_alcance = {(c, l) for c, l in celulas if
                                     self.mundo.celula(c, l) and
-                                    self.mundo.celula(c, l).ocupante is not None}
-            # Modo escolha de alvo manual
+                                    self.mundo.celula(c, l).ocupante is not None and
+                                    self.mundo.celula(c, l).ocupante is not self.jogador}
             self._modo_ataque_card = card
+            self.gerenciador.celulas_highlight = list(self.celulas_alcance)
             self.gerenciador.estado = EstadoCombate.ESCOLHENDO_ALVO
             self._adicionar_log(f"{card.nome}: selecione o alvo")
 
@@ -312,8 +352,9 @@ class TelaCombate:
             )
             self.celulas_alcance = {(c, l) for c, l in celulas}
             self._modo_ataque_card = card
+            self.gerenciador.celulas_highlight = list(celulas)
             self.gerenciador.estado = EstadoCombate.ESCOLHENDO_ALVO
-            self._adicionar_log(f"{card.nome}: selecione a célula-alvo")
+            self._adicionar_log(f"{card.nome}: selecione a celula-alvo")
 
         # Cards de habilidade / defesa
         elif card.tipo in ("habilidade", "defesa"):
@@ -350,17 +391,22 @@ class TelaCombate:
             return
 
         p = self.gerenciador.participante_ativo
-        if not p or p.ap_atual < card.custo_ap:
+        if not p:
             return
-        p.gastar_ap(card.custo_ap)
 
-        # Teste de perícia (d100)
+        # Marca acao principal como usada
+        p.ja_agiu  = True
+        p.ap_atual = max(0, p.ap_atual - 1)   # compat legada
+
+        # Teste de perícia (d100) — CoC 7e
         acerto = True
+        multiplicador = 1
+        nivel = "SUCESSO"
         if card.pericia:
             habilidade = self._habilidade_investigador(card.pericia)
             rolagem = random.randint(1, 100)
             if rolagem <= habilidade // 5:
-                nivel = "CRÍTICO"; multiplicador = 2
+                nivel = "CRITICO"; multiplicador = 2
             elif rolagem <= habilidade // 2:
                 nivel = "EXTREMO"; multiplicador = 1
             elif rolagem <= habilidade:
@@ -369,12 +415,10 @@ class TelaCombate:
                 nivel = "FUMBLE"; acerto = False; multiplicador = 0
             else:
                 nivel = "FALHA"; acerto = False; multiplicador = 0
-            self._adicionar_log(f"{card.pericia}: {rolagem} vs {habilidade} → {nivel}")
-        else:
-            multiplicador = 1
+            self._adicionar_log(f"{card.pericia}: {rolagem} vs {habilidade} [{nivel}]")
 
         if not acerto:
-            self._adicionar_log(f"❌ {card.nome} falhou!")
+            self._adicionar_log(f"{card.nome} falhou!")
             self._pos_acao()
             return
 
@@ -383,11 +427,14 @@ class TelaCombate:
 
         # Dano
         if "dano" in ef and cel.ocupante and cel.ocupante is not self.jogador:
-            dano = rolar_dado(ef["dano"]) * multiplicador
+            from engine.combate.gerenciador import _rolar_dano_coc
+            from engine.entidade import rolar_bonus_dano
+            bd   = rolar_bonus_dano(self.jogador.bonus_dano)
+            dano = _rolar_dano_coc(ef["dano"], bd, nivel)
             real = cel.ocupante.sofrer_dano(dano)
-            self._adicionar_log(f"⚔ {card.nome} → {cel.ocupante.nome}: {real} dano")
+            self._adicionar_log(f"{card.nome} -> {cel.ocupante.nome}: {real} dano [{nivel}]")
             if not cel.ocupante.vivo:
-                self._adicionar_log(f"💀 {cel.ocupante.nome} foi derrotado!")
+                self._adicionar_log(f"{cel.ocupante.nome} foi derrotado!")
                 cel.ocupante = None
 
         # Efeito de chão
@@ -411,24 +458,25 @@ class TelaCombate:
         self._pos_acao()
 
     def _executar_card_habilidade(self, card: Card):
-        """Executa cards sem alvo de grid (defesa, buff, etc.)"""
+        """Executa cards sem alvo de grid (defesa, buff, item, etc.)"""
         p = self.gerenciador.participante_ativo
-        if not p or p.ap_atual < card.custo_ap:
+        if not p:
             return
-        p.gastar_ap(card.custo_ap)
 
         ef = card.efeito
         if "cura_hp" in ef:
             cura = rolar_dado(ef["cura_hp"])
             self.jogador.hp = min(self.jogador.hp_max, self.jogador.hp + cura)
-            self._adicionar_log(f"💊 {card.nome}: +{cura} HP (agora {self.jogador.hp})")
+            self._adicionar_log(f"{card.nome}: +{cura} HP (agora {self.jogador.hp})")
         if "bonus_ap_prox" in ef:
-            p.bonus_ap += ef["bonus_ap_prox"]
-            self._adicionar_log(f"⏳ Esperar — +{ef['bonus_ap_prox']} AP no próximo turno")
+            # Compat legada — no novo sistema este efeito nao tem uso direto
+            self._adicionar_log(f"Esperar — bônus de proximo turno.")
+            self.gerenciador.passar_turno()
+            return
         if "oculto" in ef:
-            self._adicionar_log("🕵 Investigador se ocultou!")
+            self._adicionar_log("Investigador se ocultou!")
         if "recarregar" in ef:
-            self._adicionar_log("🔄 Arma recarregada.")
+            self._adicionar_log("Arma recarregada.")
 
         self._pos_acao()
 
@@ -492,7 +540,7 @@ class TelaCombate:
             self._adicionar_log(f"💥 Recuo: {ent.nome} → ({nova_cel.col},{nova_cel.linha})")
 
     def _pos_acao(self):
-        """Após executar uma card: verifica AP e estado."""
+        """Após executar uma card: limpa estado e verifica vitória."""
         self._limpar_highlights()
         self._modo_ataque_card = None
         self.card_selecionado  = None
@@ -501,29 +549,28 @@ class TelaCombate:
         inimigos_vivos = [e for e in self.inimigos if e.vivo]
         if not inimigos_vivos:
             self.gerenciador.estado = EstadoCombate.FIM_COMBATE
-            self._adicionar_log("✅ Todos os inimigos foram derrotados!")
+            self._adicionar_log("Todos os inimigos foram derrotados!")
             return
 
-        p = self.gerenciador.participante_ativo
-        if p and p.ap_atual <= 0:
-            self.gerenciador.proximo_turno()
-        else:
-            self.gerenciador.estado = EstadoCombate.TURNO_JOGADOR
+        # Volta para TURNO_JOGADOR (jogador pode ainda mover se nao moveu)
+        self.gerenciador.estado = EstadoCombate.TURNO_JOGADOR
 
     def _tentar_fuga(self):
+        pericias = getattr(self.jogador, "pericias", {})
+        hab = pericias.get("Esquivar",
+              int(getattr(self.jogador, "destreza", 50) / 2))
         roll = random.randint(1, 100)
-        hab = 40  # Esquivar base
         if roll <= hab:
-            self._adicionar_log(f"🏃 Fuga bem-sucedida! ({roll} vs {hab})")
+            self._adicionar_log(f"Fuga bem-sucedida! ({roll} vs {hab})")
             self.resultado = "fuga"
             self.gerenciador.estado = EstadoCombate.FIM_COMBATE
         else:
-            self._adicionar_log(f"❌ Fuga falhou! ({roll} vs {hab})")
-            # Perde AP
+            self._adicionar_log(f"Fuga falhou! ({roll} vs {hab})")
+            # Perde a acao principal
             p = self.gerenciador.participante_ativo
             if p:
-                p.ap_atual = 0
-                self.gerenciador.proximo_turno()
+                p.ja_agiu = True
+            self.gerenciador.proximo_turno()
 
     def _limpar_highlights(self):
         self.celulas_movimento = set()
@@ -594,16 +641,16 @@ class TelaCombate:
         # Todas as entidades (jogador + inimigos)
         todas = [self.jogador] + self.inimigos
 
-        # Combina highlights do gerenciador legado com os do cards
+        estado = self.gerenciador.estado
+
+        # Combina highlights do gerenciador com os do cards
         mov_hl = self.celulas_movimento | {
             (c, l) for c, l in self.gerenciador.celulas_highlight
-            if self.gerenciador.acao_selecionada and
-               self.gerenciador.acao_selecionada.tipo == TipoAcao.MOVER
+            if estado == EstadoCombate.ESCOLHENDO_MOVIMENTO
         }
         atq_hl = self.celulas_alcance | {
             (c, l) for c, l in self.gerenciador.celulas_highlight
-            if self.gerenciador.acao_selecionada and
-               self.gerenciador.acao_selecionada.tipo == TipoAcao.ATACAR
+            if estado == EstadoCombate.ESCOLHENDO_ALVO
         }
 
         p_ativo = self.gerenciador.participante_ativo
@@ -622,10 +669,73 @@ class TelaCombate:
         # Painel HUD
         self._desenhar_painel_hud()
 
+        # Popup de reação (sobrepõe tudo quando aguardando)
+        if estado == EstadoCombate.AGUARDANDO_REACAO:
+            self._desenhar_popup_reacao()
+
         # Info do cursor
         self._desenhar_info_cursor()
 
         pygame.display.flip()
+
+    def _on_pedir_reacao_callback(self):
+        """Chamado pelo gerenciador quando o jogador é atacado. Só muda estado."""
+        # O estado já foi setado para AGUARDANDO_REACAO pelo gerenciador.
+        # O popup é desenhado em _renderizar. Nenhuma ação extra necessária.
+        pass
+
+    def _desenhar_popup_reacao(self):
+        """Desenha o popup de reação semi-transparente sobre o grid."""
+        dados = self.gerenciador._reacao_pendente
+        nome_atk = dados["atacante"].nome if dados else "Inimigo"
+
+        sw, sh = self.screen.get_size()
+        pw, ph = 380, 160
+        px = (sw - pw) // 2
+        py = (sh - ph) // 2
+
+        # Fundo semi-transparente
+        overlay = pygame.Surface((sw, sh), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 120))
+        self.screen.blit(overlay, (0, 0))
+
+        # Caixa do popup
+        pygame.draw.rect(self.screen, (25, 20, 35), (px, py, pw, ph))
+        pygame.draw.rect(self.screen, (180, 60, 60), (px, py, pw, ph), 2)
+
+        # Título
+        titulo = self.f_titulo.render(f"{nome_atk} ATACA!", True, (220, 80, 80))
+        r = titulo.get_rect(centerx=px + pw // 2, top=py + 10)
+        self.screen.blit(titulo, r)
+
+        # Opções
+        opcoes = [
+            ("[E] Esquivar",       (100, 200, 100)),
+            ("[C] Contra-atacar",  (200, 160, 60)),
+            ("[N] Absorver",       (140, 140, 140)),
+        ]
+        for i, (txt, cor) in enumerate(opcoes):
+            s = self.f_normal.render(txt, True, cor)
+            self.screen.blit(s, (px + 20 + i * 120, py + 60))
+
+        # Dica de perícias
+        pj = self.gerenciador.participante_jogador
+        if pj:
+            pericias = getattr(pj.entidade, "pericias", {})
+            esq = pericias.get("Esquivar",
+                  int(getattr(pj.entidade, "destreza", 50) / 2))
+            bri = pericias.get("Lutar (Soco)",
+                  pericias.get("Briga", 25))
+            dica = f"Esquivar:{esq}%  Lutar:{bri}%"
+            if not pj.reacao_disponivel:
+                dica = "REACAO JA USADA - pressione [N]"
+            s = self.f_normal.render(dica, True, (160, 160, 160))
+            self.screen.blit(s, (px + 10, py + 100))
+
+        # Aviso se reação já foi usada
+        if pj and not pj.reacao_disponivel:
+            aviso = self.f_normal.render("Apenas [N] disponivel", True, (200, 80, 80))
+            self.screen.blit(aviso, (px + 10, py + 125))
 
     def _desenhar_painel_hud(self):
         # Fundo do HUD
@@ -637,20 +747,36 @@ class TelaCombate:
         p = self.gerenciador.participante_ativo
         ent_ativa = p.entidade if p else None
 
-        # AP indicator
+        # ── Slots de Ação (substitui barra de AP) ──
         if p:
-            cheios  = "#" * min(p.ap_atual, 10)
-            vazios  = "." * min(max(0, p.ap_maximo - p.ap_atual), 10)
-            ap_txt = self.f_titulo.render(
-                f"AP: {cheios}{vazios}",
-                True, (200, 200, 80)
-            )
-            self.screen.blit(ap_txt, (self.area_hud.left + 10, 10))
+            x0  = self.area_hud.left + 8
+            y0  = 8
+            cor_livre  = (80, 200, 80)
+            cor_usada  = (120, 60, 60)
+            cor_mov    = (80, 140, 220)
+
+            # ACAO
+            acao_cor = cor_usada if p.ja_agiu else cor_livre
+            acao_lbl = "[ACAO: USADA]" if p.ja_agiu else "[ACAO: LIVRE]"
+            s = self.f_titulo.render(acao_lbl, True, acao_cor)
+            self.screen.blit(s, (x0, y0))
+
+            # MOV
+            mov_cor = cor_usada if p.mov_restante <= 0 else cor_mov
+            mov_lbl = f"[MOV: {p.mov_restante}]"
+            s = self.f_titulo.render(mov_lbl, True, mov_cor)
+            self.screen.blit(s, (x0, y0 + 22))
+
+            # REACAO
+            rea_cor = cor_usada if not p.reacao_disponivel else (180, 140, 60)
+            rea_lbl = "[REA: USADA]" if not p.reacao_disponivel else "[REA: LIVRE]"
+            s = self.f_titulo.render(rea_lbl, True, rea_cor)
+            self.screen.blit(s, (x0, y0 + 44))
 
         self.renderer.desenhar_painel_hud(
             superficie=self.screen,
             x=self.area_hud.left,
-            y=40,
+            y=76,
             largura=self.LARGURA_HUD,
             entidade_ativa=ent_ativa,
             cards_disponiveis=self.deck,
@@ -663,7 +789,10 @@ class TelaCombate:
         )
 
         # Dica de controles
-        dicas = ["[1-9] Carta  [F] Fuga", "[Enter] Esperar  [Esc] Cancelar"]
+        dicas = [
+            "[1-9] Carta  [M] Mover  [F] Fuga",
+            "[Enter] Passar  [Esc] Cancelar",
+        ]
         for i, d in enumerate(dicas):
             s = self.f_normal.render(d, True, (100, 100, 130))
             self.screen.blit(s, (self.area_hud.left + 8,

@@ -353,7 +353,7 @@ class RendererCombate:
         cy += 8
 
         # ── Cartas disponíveis (scrollável) ──────────────────
-        header = font_normal.render("ACOES  [PgUp/PgDn]", True, (150, 150, 170))
+        header = font_normal.render("ACOES [1-9] PgUp/PgDn", True, (150, 150, 170))
         superficie.blit(header, (x + pad, cy))
         cy += header.get_height() + 4
 
@@ -388,8 +388,8 @@ class RendererCombate:
             tecla = font_normal.render(hotkey, True, (150, 200, 150))
             superficie.blit(tecla, (r.x + 4, r.y + 5))
 
-            # Nome da carta + custo AP
-            nome_label = f"[{card.custo_ap}AP] {card.nome}"
+            # Nome da carta
+            nome_label = _limpar_texto(card.nome)
             label = font_normal.render(nome_label, True, (220, 220, 220))
             superficie.blit(label, (r.x + 30, r.y + 5))
 
@@ -425,12 +425,15 @@ class RendererCombate:
                 break
             # Determina cor com o texto original (antes de sanitizar)
             cor = (180, 180, 180)
-            if "CRÍTICO" in linha_log:       cor = (255, 220, 0)
-            if "🔥" in linha_log:            cor = (255, 100, 20)
-            if "FUMBLE" in linha_log:        cor = (220, 60, 60)
-            if "morr" in linha_log.lower():  cor = (180, 50, 50)
-            if "cura" in linha_log.lower():  cor = (80, 200, 80)
-            if "[X]" in linha_log or "derrotado" in linha_log.lower(): cor = (220, 80, 80)
+            ll = linha_log.lower()
+            if "critico" in ll or "CRITICO" in linha_log:  cor = (255, 220, 0)
+            if "extremo" in ll or "EXTREMO" in linha_log:  cor = (220, 180, 60)
+            if "fumble" in ll or "FUMBLE" in linha_log:    cor = (220, 60, 60)
+            if "esquivou" in ll:                           cor = (80, 200, 80)
+            if "contra-ataque acertou" in ll:              cor = (80, 200, 80)
+            if "morr" in ll or "derrotado" in ll:          cor = (220, 80, 80)
+            if "cura" in ll or "+hp" in ll:                cor = (80, 200, 80)
+            if "[x]" in ll:                                cor = (220, 80, 80)
 
             # Sanitiza para fontes bitmap (VT323/SpecialElite não suportam emoji)
             linha_log = _limpar_texto(linha_log)
