@@ -373,11 +373,12 @@ class GerenciadorCombate:
             dist   = abs(jc - ec) + abs(jl - el)
 
             if dist <= 1:
-                # Ataca
-                if p.gastar_ap(2):
-                    cel = self.mundo.celula(jc, jl)
-                    if cel:
-                        self._atacar(p.entidade, cel)
+                # Ataca (custa 2 AP)
+                if not p.gastar_ap(2):
+                    break   # AP insuficiente para atacar — encerra turno
+                cel = self.mundo.celula(jc, jl)
+                if cel:
+                    self._atacar(p.entidade, cel)
             else:
                 # Move 1 passo em direção ao jogador
                 dc = 0 if jc == ec else (1 if jc > ec else -1)

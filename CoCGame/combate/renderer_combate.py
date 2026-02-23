@@ -353,7 +353,7 @@ class RendererCombate:
         cy += 8
 
         # ── Cartas disponíveis (scrollável) ──────────────────
-        header = font_normal.render("AÇÕES  [↑↓ rolar]", True, (150, 150, 170))
+        header = font_normal.render("ACOES  [PgUp/PgDn]", True, (150, 150, 170))
         superficie.blit(header, (x + pad, cy))
         cy += header.get_height() + 4
 
