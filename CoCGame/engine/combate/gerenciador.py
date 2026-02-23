@@ -167,8 +167,11 @@ class GerenciadorCombate:
 
     @property
     def participante_jogador(self) -> Optional[Participante]:
-        """Sempre o primeiro participante (o jogador)."""
-        return self.participantes[0] if self.participantes else None
+        """Retorna o participante cujo entidade é o jogador (independente da ordem de iniciativa)."""
+        ref = getattr(self, "_entidade_jogador", None)
+        if ref is None and self.participantes:
+            return self.participantes[0]   # fallback antes de iniciar_combate
+        return next((p for p in self.participantes if p.entidade is ref), None)
 
     def log(self, msg: str):
         self._on_log(msg)
@@ -177,6 +180,8 @@ class GerenciadorCombate:
 
     def iniciar_combate(self, jogador: Entidade, inimigos: List[Entidade]):
         self.participantes = []
+        # Guarda referência direta ao jogador para identificação após o sort
+        self._entidade_jogador: Entidade = jogador
 
         p_jogador = Participante(
             entidade=jogador,
@@ -211,7 +216,7 @@ class GerenciadorCombate:
             return
         p.resetar_turno()
 
-        eh_jogador = (p.entidade is self.participantes[0].entidade)
+        eh_jogador = (p.entidade is self._entidade_jogador)
         if eh_jogador:
             self.estado = EstadoCombate.TURNO_JOGADOR
             self.log(f"Seu turno | MOV:{p.mov_restante} | Acao: disponivel")
