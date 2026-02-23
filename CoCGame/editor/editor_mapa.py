@@ -56,7 +56,7 @@ except ImportError:
 # CONSTANTES
 # ══════════════════════════════════════════════════════════════
 
-W, H            = 1280, 720
+W, H            = 1920, 1080
 PAL_W           = 200       # largura painel esquerdo (paleta)
 PROP_W          = 260       # largura painel direito (propriedades)
 TOPO_H          = 44        # altura barra superior
@@ -656,6 +656,15 @@ class EditorMapa:
         # Fechar janela
         if event.type == pygame.QUIT:
             return "sair"
+
+        # F11 alterna fullscreen
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
+            flags = self.screen.get_flags()
+            if flags & pygame.FULLSCREEN:
+                self.screen = pygame.display.set_mode((W, H), pygame.RESIZABLE)
+            else:
+                self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+            return None
 
         # Diálogo Novo Mapa
         if self._dlg_novo:
@@ -1403,7 +1412,7 @@ class EditorMapa:
 def main():
     pygame.init()
     pygame.mixer.init()
-    screen = pygame.display.set_mode((W, H), pygame.SCALED | pygame.RESIZABLE)
+    screen = pygame.display.set_mode((W, H), pygame.RESIZABLE)
     clock  = pygame.time.Clock()
     pygame.display.set_caption("Editor de Mapas — CoC 7e")
     garantir_fontes(verbose=False)

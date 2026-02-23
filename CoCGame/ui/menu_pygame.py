@@ -29,7 +29,7 @@ except Exception:
     _audio = None  # type: ignore
 
 # ── constantes visuais ─────────────────────────────────────────
-LARGURA, ALTURA = 1280, 720
+LARGURA, ALTURA = 1920, 1080   # default — será sobreposto por screen.get_size() em tempo real
 
 COR_FUNDO     = ( 26,  26,  46)
 COR_PAINEL    = ( 22,  33,  62)
@@ -145,14 +145,16 @@ class MenuPrincipal:
     # ── desenho ───────────────────────────────────────────────
 
     def _calcular_rects(self) -> list[tuple[pygame.Rect, dict]]:
+        W, H = self.tela.get_size()
         rects = []
-        y = BOTAO_Y0
+        y = int(H * 0.32)   # 32% da altura
         for b in self._botoes:
             if "sep" in b:
                 y += 24
                 continue
-            x = (LARGURA - BOTAO_W) // 2
-            rects.append((pygame.Rect(x, y, BOTAO_W, BOTAO_H), b))
+            bw = min(BOTAO_W, W - 100)
+            x = (W - bw) // 2
+            rects.append((pygame.Rect(x, y, bw, BOTAO_H), b))
             y += ESPACO
         return rects
 
@@ -180,19 +182,21 @@ class MenuPrincipal:
             self.tela.blit(ds, ds.get_rect(centerx=rect.centerx, y=rect.bottom + 2))
 
     def _draw_separadores(self):
-        y = BOTAO_Y0
+        W, H = self.tela.get_size()
+        y = int(H * 0.32)
         for b in self._botoes:
             if "sep" in b:
                 s = self._fn_sep.render(b["sep"], True, COR_SEP)
-                self.tela.blit(s, s.get_rect(centerx=LARGURA // 2, y=y + 4))
+                self.tela.blit(s, s.get_rect(centerx=W // 2, y=y + 4))
                 y += 24
             else:
                 y += ESPACO
 
     def _draw_particulas(self, t: float):
+        W, H = self.tela.get_size()
         for i in range(50):
-            x = (i * 157 + int(t * 8  * (i % 4 + 1))) % LARGURA
-            y = (i * 113 + int(t * 4  * (i % 5 + 1))) % ALTURA
+            x = (i * 157 + int(t * 8  * (i % 4 + 1))) % W
+            y = (i * 113 + int(t * 4  * (i % 5 + 1))) % H
             alfa = int(60 + abs(math.sin(t + i)) * 80)
             pygame.draw.circle(
                 self.tela,
@@ -201,22 +205,24 @@ class MenuPrincipal:
             )
 
     def _draw_titulo(self, t: float):
+        W, H = self.tela.get_size()
+        cy_base = int(H * 0.12)
         pulso = abs(math.sin(t * 1.5))
         cor   = (int(200 + pulso * 33), int(50 + pulso * 19), int(80 + pulso * 16))
 
         surf_icon = self._fn_tit.render("~@ ~", True, cor)
-        self.tela.blit(surf_icon, surf_icon.get_rect(centerx=LARGURA // 2, y=70))
+        self.tela.blit(surf_icon, surf_icon.get_rect(centerx=W // 2, y=cy_base))
 
         surf_t = self._fn_tit.render("CALL OF CTHULHU", True, cor)
-        self.tela.blit(surf_t, surf_t.get_rect(centerx=LARGURA // 2, y=148))
+        self.tela.blit(surf_t, surf_t.get_rect(centerx=W // 2, y=cy_base + 78))
 
         surf_s = self._fn_subtit.render("7a Edicao  --  Sistema de Jogo", True, COR_OURO)
-        self.tela.blit(surf_s, surf_s.get_rect(centerx=LARGURA // 2, y=208))
+        self.tela.blit(surf_s, surf_s.get_rect(centerx=W // 2, y=cy_base + 138))
 
-        sep_y = 224
+        sep_y = cy_base + 158
         pygame.draw.line(self.tela, COR_DESTAQUE,
-                         (LARGURA // 2 - 190, sep_y),
-                         (LARGURA // 2 + 190, sep_y), 1)
+                         (W // 2 - 190, sep_y),
+                         (W // 2 + 190, sep_y), 1)
 
     # ── loop ──────────────────────────────────────────────────
 
@@ -245,6 +251,15 @@ class MenuPrincipal:
                 if event.type == pygame.QUIT:
                     pygame.quit(); sys.exit()
 
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_F11:
+                    flags = self.tela.get_flags()
+                    if flags & pygame.FULLSCREEN:
+                        self.tela = pygame.display.set_mode(
+                            (LARGURA, ALTURA), pygame.RESIZABLE)
+                    else:
+                        self.tela = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+                    continue
+
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     for rect, botao in rects:
                         if rect.collidepoint(mouse_pos):
@@ -261,6 +276,7 @@ class MenuPrincipal:
                         return acao
 
             # ── desenho ──
+            W, H = self.tela.get_size()
             self.tela.fill(COR_FUNDO)
             self._draw_particulas(t)
             self._draw_titulo(t)
@@ -283,7 +299,7 @@ class MenuPrincipal:
                 True, COR_DESTAQUE,
             )
             self.tela.blit(rodape,
-                           rodape.get_rect(centerx=LARGURA // 2, y=ALTURA - 22))
+                           rodape.get_rect(centerx=W // 2, y=H - 22))
 
             pygame.display.flip()
             self.clock.tick(60)
@@ -293,8 +309,7 @@ class MenuPrincipal:
 def main():
     os.environ.setdefault("SDL_VIDEODRIVER", "x11")
     pygame.init()
-    tela  = pygame.display.set_mode((LARGURA, ALTURA),
-                                    pygame.SCALED | pygame.RESIZABLE)
+    tela  = pygame.display.set_mode((LARGURA, ALTURA), pygame.RESIZABLE)
     clock = pygame.time.Clock()
     pygame.display.set_caption("Call of Cthulhu 7e")
     _ga.garantir_fontes(verbose=False)

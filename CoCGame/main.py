@@ -23,7 +23,7 @@ os.environ["SDL_VIDEODRIVER"] = "x11"
 import pygame
 import gerenciador_assets as _ga
 
-LARGURA, ALTURA = 1280, 720
+LARGURA, ALTURA = 1920, 1080
 
 C_PRETO  = (  0,   0,   0)
 C_OURO   = (212, 168,  67)
@@ -50,6 +50,12 @@ def _checar_skip(events):
             pygame.K_ESCAPE, pygame.K_RETURN, pygame.K_SPACE, pygame.K_KP_ENTER
         ):
             return True
+        if e.type == pygame.KEYDOWN and e.key == pygame.K_F11:
+            flags = pygame.display.get_surface().get_flags()
+            if flags & pygame.FULLSCREEN:
+                pygame.display.set_mode((LARGURA, ALTURA), pygame.RESIZABLE)
+            else:
+                pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         if e.type == pygame.MOUSEBUTTONDOWN:
             return True
     return False
@@ -242,7 +248,7 @@ def _iniciar_mundo(tela, jogador):
 def main():
     pygame.init()
     pygame.mixer.init()
-    tela  = pygame.display.set_mode((LARGURA, ALTURA), pygame.SCALED | pygame.RESIZABLE)
+    tela  = pygame.display.set_mode((LARGURA, ALTURA), pygame.RESIZABLE)
     clock = pygame.time.Clock()
     pygame.display.set_caption("Call of Cthulhu 7e")
 
@@ -251,6 +257,14 @@ def main():
         sys.path.insert(0, _RAIZ)
 
     _ga.garantir_fontes(verbose=False)
+
+    # F11 alterna tela cheia antes das intros
+    def _toggle_fullscreen():
+        flags = tela.get_flags()
+        if flags & pygame.FULLSCREEN:
+            pygame.display.set_mode((LARGURA, ALTURA), pygame.RESIZABLE)
+        else:
+            pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
 
     # ── Intros (todo pulável) ─────────────────────────────────
     _cena_negro(tela, clock, 400)
@@ -268,6 +282,9 @@ def main():
     while True:
         audio.play_music("menu")   # toca Hellraiser; sem-op se já tocando
         acao = MenuPrincipal(tela, clock).run()
+
+        # F11 é tratado dentro do MenuPrincipal mas também aqui como fallback
+        tela = pygame.display.get_surface()   # reatualiza ref após possível modo fullscreen
 
         if acao == "sair":
             audio.stop_music(fade_ms=800)
